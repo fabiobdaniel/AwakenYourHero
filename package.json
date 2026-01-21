@@ -1,0 +1,12 @@
+{
+  "name": "awaken-your-hero",
+  "version": "1.0.0",
+  "description": "Awaken Your Hero - Leadership Transformation & Executive Coaching",
+  "scripts": {
+    "dev": "python3 -m http.server 8000"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.7"
+  },
+  "devDependencies": {}
+}
