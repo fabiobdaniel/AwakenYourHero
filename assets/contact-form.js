@@ -36,13 +36,19 @@
       
       const countrySelect = document.createElement('select');
       countrySelect.className = 'country-code-select';
-      countrySelect.style.padding = '8px 12px';
+      countrySelect.style.padding = '8px 8px';
       countrySelect.style.border = '1px solid hsl(var(--border))';
       countrySelect.style.borderRadius = 'calc(var(--radius) - 2px)';
       countrySelect.style.backgroundColor = 'hsl(var(--background))';
       countrySelect.style.color = 'hsl(var(--foreground))';
-      countrySelect.style.fontSize = '14px';
-      countrySelect.style.minWidth = '100px';
+      countrySelect.style.fontSize = '18px';
+      countrySelect.style.width = '60px';
+      countrySelect.style.minWidth = '60px';
+      countrySelect.style.textAlign = 'center';
+      countrySelect.style.cursor = 'pointer';
+      
+      // Make phone input longer
+      phoneInput.style.flex = '1';
       
       // Add country codes in order: US, BR, MX, CO, AR, CL, PT
       const countries = [
@@ -55,10 +61,14 @@
         { code: '+351', country: 'PT', flag: '🇵🇹' },
       ];
       
+      // Store countries data on select element for later use
+      countrySelect.countriesData = countries;
+      
       countries.forEach(country => {
         const option = document.createElement('option');
         option.value = country.code;
-        option.textContent = `${country.flag} ${country.code}`;
+        option.setAttribute('data-flag', country.flag);
+        option.textContent = country.flag; // Show only flag
         countrySelect.appendChild(option);
       });
       
@@ -103,19 +113,30 @@
           data[key] = value;
         });
         
-        // Get phone with country code
+        // Get phone with country code and flag
         const countrySelect = document.querySelector('.country-code-select');
         const phoneInput = document.querySelector('.phone-input-wrapper input') || 
                           document.querySelector('input[type="tel"]');
         
+        let phoneDisplay = '';
+        let phoneNumber = '';
+        
         if (phoneInput && countrySelect) {
           const phoneValue = phoneInput.value.trim();
           const countryCode = countrySelect.value;
+          const selectedOption = countrySelect.options[countrySelect.selectedIndex];
+          const flag = selectedOption ? selectedOption.getAttribute('data-flag') : '';
+          
           if (phoneValue && !phoneValue.startsWith('+')) {
-            data.phone = countryCode + phoneValue.replace(/^\+/, '');
+            phoneNumber = countryCode + phoneValue.replace(/^\+/, '');
+            phoneDisplay = `${flag} ${phoneNumber}`;
           } else if (phoneValue) {
-            data.phone = phoneValue;
+            phoneNumber = phoneValue;
+            phoneDisplay = `${flag} ${phoneNumber}`;
           }
+          
+          data.phone = phoneNumber;
+          data.phoneDisplay = phoneDisplay;
         }
         
         // Get all form fields
@@ -148,7 +169,7 @@
                 <h2>New Contact Form Submission</h2>
                 <p><strong>Name:</strong> ${data.name || 'N/A'}</p>
                 <p><strong>Email:</strong> ${data.email || 'N/A'}</p>
-                <p><strong>Phone:</strong> ${data.phone || 'N/A'}</p>
+                <p><strong>Phone:</strong> ${data.phoneDisplay || data.phone || 'N/A'}</p>
                 <p><strong>Interest:</strong> ${data.interest || 'N/A'}</p>
                 <p><strong>Message:</strong></p>
                 <p>${data.message || 'N/A'}</p>
@@ -158,7 +179,7 @@
                 
                 Name: ${data.name || 'N/A'}
                 Email: ${data.email || 'N/A'}
-                Phone: ${data.phone || 'N/A'}
+                Phone: ${data.phoneDisplay || data.phone || 'N/A'}
                 Interest: ${data.interest || 'N/A'}
                 
                 Message:
