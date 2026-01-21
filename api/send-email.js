@@ -44,28 +44,40 @@ export default async function handler(req, res) {
     }
 
     // Option 2: Using Nodemailer with SMTP (if you have SMTP credentials)
-    // This requires nodemailer package - install with: npm install nodemailer
-    const nodemailer = require('nodemailer');
+    const SMTP_HOST = process.env.SMTP_HOST;
+    const SMTP_USER = process.env.SMTP_USER;
+    const SMTP_PASS = process.env.SMTP_PASS;
     
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+    if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+      // This requires nodemailer package - install with: npm install nodemailer
+      const nodemailer = require('nodemailer');
+      
+      const transporter = nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || '587'),
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: {
+          user: SMTP_USER,
+          pass: SMTP_PASS,
+        },
+      });
 
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || 'noreply@awakenyourhero.com',
-      to: to,
-      subject: subject,
-      html: html,
-      text: text,
-    });
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM || 'noreply@awakenyourhero.com',
+        to: to,
+        subject: subject,
+        html: html,
+        text: text,
+      });
 
-    return res.status(200).json({ success: true });
+      return res.status(200).json({ success: true });
+    }
+
+    // If neither Resend nor SMTP is configured, return error
+    return res.status(500).json({ 
+      error: 'Email service not configured',
+      message: 'Please configure RESEND_API_KEY or SMTP credentials in Vercel environment variables'
+    });
   } catch (error) {
     console.error('Email error:', error);
     return res.status(500).json({ 
