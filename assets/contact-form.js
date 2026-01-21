@@ -44,20 +44,15 @@
       countrySelect.style.fontSize = '14px';
       countrySelect.style.minWidth = '100px';
       
-      // Add country codes
+      // Add country codes in order: US, BR, MX, CO, AR, CL, PT
       const countries = [
         { code: '+1', country: 'US/CA', flag: '🇺🇸' },
         { code: '+55', country: 'BR', flag: '🇧🇷' },
-        { code: '+44', country: 'UK', flag: '🇬🇧' },
-        { code: '+33', country: 'FR', flag: '🇫🇷' },
-        { code: '+49', country: 'DE', flag: '🇩🇪' },
-        { code: '+34', country: 'ES', flag: '🇪🇸' },
-        { code: '+39', country: 'IT', flag: '🇮🇹' },
-        { code: '+351', country: 'PT', flag: '🇵🇹' },
         { code: '+52', country: 'MX', flag: '🇲🇽' },
+        { code: '+57', country: 'CO', flag: '🇨🇴' },
         { code: '+54', country: 'AR', flag: '🇦🇷' },
         { code: '+56', country: 'CL', flag: '🇨🇱' },
-        { code: '+57', country: 'CO', flag: '🇨🇴' },
+        { code: '+351', country: 'PT', flag: '🇵🇹' },
       ];
       
       countries.forEach(country => {
@@ -67,8 +62,8 @@
         countrySelect.appendChild(option);
       });
       
-      // Set default to Brazil (+55)
-      countrySelect.value = '+55';
+      // Set default to US (+1)
+      countrySelect.value = '+1';
       
       // Wrap phone input
       phoneInput.parentNode.insertBefore(phoneWrapper, phoneInput);
