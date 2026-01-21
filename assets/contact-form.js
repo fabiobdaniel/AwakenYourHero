@@ -50,19 +50,19 @@
       // Make phone input longer
       phoneInput.style.flex = '1';
       
-      // Add country codes in order: US, BR, MX, CO, AR, CL, PT, PR, PE, CR, GT
+      // Add country codes: US (default), BR, MX, then others alphabetically
       const countries = [
         { code: '+1', country: 'US/CA', flag: '🇺🇸' },
         { code: '+55', country: 'BR', flag: '🇧🇷' },
         { code: '+52', country: 'MX', flag: '🇲🇽' },
-        { code: '+57', country: 'CO', flag: '🇨🇴' },
         { code: '+54', country: 'AR', flag: '🇦🇷' },
         { code: '+56', country: 'CL', flag: '🇨🇱' },
-        { code: '+351', country: 'PT', flag: '🇵🇹' },
-        { code: '+1', country: 'PR', flag: '🇵🇷' },
-        { code: '+51', country: 'PE', flag: '🇵🇪' },
+        { code: '+57', country: 'CO', flag: '🇨🇴' },
         { code: '+506', country: 'CR', flag: '🇨🇷' },
         { code: '+502', country: 'GT', flag: '🇬🇹' },
+        { code: '+51', country: 'PE', flag: '🇵🇪' },
+        { code: '+1', country: 'PR', flag: '🇵🇷' },
+        { code: '+351', country: 'PT', flag: '🇵🇹' },
       ];
       
       // Store countries data on select element for later use
