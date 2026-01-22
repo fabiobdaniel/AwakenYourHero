@@ -20,7 +20,7 @@ export default async function handler(req, res) {
   try {
     console.log('Email API called:', { method: req.method, body: req.body });
     
-    const { to, subject, html, text } = req.body;
+    const { to, subject, html, text, replyTo } = req.body;
 
     if (!to || !subject) {
       console.error('Missing required fields:', { to, subject });
@@ -37,19 +37,26 @@ export default async function handler(req, res) {
       const fromEmail = process.env.RESEND_FROM_EMAIL || 'Awaken Your Hero <onboarding@resend.dev>';
       console.log('Sending email via Resend:', { from: fromEmail, to, subject });
       
+      const emailPayload = {
+        from: fromEmail,
+        to: [to],
+        subject: subject,
+        html: html || text,
+        text: text || html,
+      };
+      
+      // Add reply-to if provided
+      if (replyTo) {
+        emailPayload.reply_to = replyTo;
+      }
+      
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${RESEND_API_KEY}`,
         },
-        body: JSON.stringify({
-          from: fromEmail,
-          to: [to],
-          subject: subject,
-          html: html || text,
-          text: text || html,
-        }),
+        body: JSON.stringify(emailPayload),
       });
 
       const responseText = await response.text();

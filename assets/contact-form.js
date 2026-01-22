@@ -169,10 +169,38 @@
           data[key] = value;
         });
         
+        // Get all form fields directly (in case FormData doesn't capture everything)
+        const formInputs = contactForm.querySelectorAll('input, textarea, select');
+        formInputs.forEach(input => {
+          if (input.name) {
+            // Try multiple name variations
+            const name = input.name;
+            const value = input.value;
+            
+            // Map common field names
+            if (name === 'fullName' || name === 'name' || name === 'fullname') {
+              data.name = value || data.name;
+            } else if (name === 'email' || name === 'e-mail') {
+              data.email = value || data.email;
+            } else if (name === 'phone' || name === 'tel' || name === 'telephone') {
+              // Don't override phone here, we'll handle it separately
+            } else if (name === 'interest' || name === 'interested' || name === 'service') {
+              data.interest = value || data.interest;
+            } else if (name === 'message' || name === 'msg' || name === 'comments') {
+              data.message = value || data.message;
+            } else {
+              // Store with original name
+              data[name] = value || data[name];
+            }
+          }
+        });
+        
         // Get phone with country code and flag
         const countrySelect = document.querySelector('.country-code-select');
         const phoneInput = document.querySelector('.phone-input-wrapper input') || 
-                          document.querySelector('input[type="tel"]');
+                          document.querySelector('input[type="tel"]') ||
+                          document.querySelector('input[name="phone"]') ||
+                          document.querySelector('input[id="phone"]');
         
         let phoneDisplay = '';
         let phoneNumber = '';
@@ -193,15 +221,11 @@
           
           data.phone = phoneNumber;
           data.phoneDisplay = phoneDisplay;
+        } else if (phoneInput) {
+          // If no country selector, use phone value as is
+          data.phone = phoneInput.value.trim();
+          data.phoneDisplay = data.phone;
         }
-        
-        // Get all form fields
-        const formInputs = contactForm.querySelectorAll('input, textarea, select');
-        formInputs.forEach(input => {
-          if (input.name && !data[input.name]) {
-            data[input.name] = input.value;
-          }
-        });
         
         // Show loading state
         const submitButton = contactForm.querySelector('button[type="submit"]');
@@ -212,6 +236,19 @@
         }
         
         try {
+          // Format interest for subject
+          const interestLabels = {
+            'coffee': 'Coffee with Fabio',
+            'speaking': 'Speaking Engagement',
+            'break-the-cage': 'Break the Cage Experience',
+            'mentoring': 'Mentoring / Coaching',
+            'advisory': 'Advisory Services',
+            'other': 'Virtual Coffee with Fabio'
+          };
+          
+          const interestLabel = interestLabels[data.interest] || data.interest || 'General Inquiry';
+          const subject = `${interestLabel} - ${data.name || 'New Contact'}`;
+          
           // Send email using EmailJS or Vercel API
           const response = await fetch('/api/send-email', {
             method: 'POST',
@@ -220,26 +257,32 @@
             },
             body: JSON.stringify({
               to: 'contact@fabiobdaniel.com',
-              subject: `New Contact Form Submission from ${data.name || 'Website'}`,
+              replyTo: data.email || undefined,
+              subject: subject,
               html: `
                 <h2>New Contact Form Submission</h2>
+                <p><strong>Interest:</strong> ${interestLabel}</p>
                 <p><strong>Name:</strong> ${data.name || 'N/A'}</p>
-                <p><strong>Email:</strong> ${data.email || 'N/A'}</p>
+                <p><strong>Email:</strong> <a href="mailto:${data.email || ''}">${data.email || 'N/A'}</a></p>
                 <p><strong>Phone:</strong> ${data.phoneDisplay || data.phone || 'N/A'}</p>
-                <p><strong>Interest:</strong> ${data.interest || 'N/A'}</p>
                 <p><strong>Message:</strong></p>
                 <p>${data.message || 'N/A'}</p>
+                <hr>
+                <p><small>Reply to: ${data.email || 'N/A'}</small></p>
               `,
               text: `
                 New Contact Form Submission
                 
+                Interest: ${interestLabel}
                 Name: ${data.name || 'N/A'}
                 Email: ${data.email || 'N/A'}
                 Phone: ${data.phoneDisplay || data.phone || 'N/A'}
-                Interest: ${data.interest || 'N/A'}
                 
                 Message:
                 ${data.message || 'N/A'}
+                
+                ---
+                Reply to: ${data.email || 'N/A'}
               `
             })
           });
