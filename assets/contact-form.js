@@ -28,11 +28,52 @@
       return String(arg);
     }).join(' ');
 
+    // Capture stack trace to get code execution info
+    let stackTrace = '';
+    let functionName = '';
+    let fileName = '';
+    let lineNumber = '';
+    
+    try {
+      const stack = new Error().stack;
+      if (stack) {
+        const stackLines = stack.split('\n');
+        // Skip first 3 lines (Error, addToLog, console override)
+        // Look for the actual calling function
+        for (let i = 3; i < Math.min(stackLines.length, 8); i++) {
+          const line = stackLines[i];
+          if (line && !line.includes('contact-form.js') || i === 3) {
+            // Extract function name
+            const funcMatch = line.match(/at\s+(\w+)/);
+            if (funcMatch) {
+              functionName = funcMatch[1];
+            }
+            
+            // Extract file and line
+            const fileMatch = line.match(/\((.+):(\d+):(\d+)\)/) || line.match(/(.+):(\d+):(\d+)/);
+            if (fileMatch) {
+              fileName = fileMatch[1].split('/').pop(); // Just filename
+              lineNumber = fileMatch[2];
+            }
+            
+            stackTrace = line.trim();
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore stack trace errors
+    }
+
     const logEntry = {
       timestamp,
       level,
       message,
-      fullArgs: args
+      fullArgs: args,
+      functionName: functionName || 'unknown',
+      fileName: fileName || 'contact-form.js',
+      lineNumber: lineNumber || '?',
+      stackTrace: stackTrace || ''
     };
 
     logEntries.push(logEntry);
@@ -81,8 +122,21 @@
     }
 
     const logText = logEntries.map(entry => {
-      return `[${entry.timestamp}] [${entry.level}] ${entry.message}`;
-    }).join('\n');
+      let logLine = `[${entry.timestamp}] [${entry.level}] ${entry.message}`;
+      
+      // Add code execution info
+      if (entry.functionName && entry.functionName !== 'unknown') {
+        logLine += `\n  └─ Function: ${entry.functionName}`;
+      }
+      if (entry.fileName && entry.lineNumber) {
+        logLine += `\n  └─ Code: ${entry.fileName}:${entry.lineNumber}`;
+      }
+      if (entry.stackTrace) {
+        logLine += `\n  └─ Stack: ${entry.stackTrace}`;
+      }
+      
+      return logLine;
+    }).join('\n\n');
 
     const blob = new Blob([logText], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -98,8 +152,21 @@
   // Function to get logs as text
   window.getContactFormLogs = function() {
     return logEntries.map(entry => {
-      return `[${entry.timestamp}] [${entry.level}] ${entry.message}`;
-    }).join('\n');
+      let logLine = `[${entry.timestamp}] [${entry.level}] ${entry.message}`;
+      
+      // Add code execution info
+      if (entry.functionName && entry.functionName !== 'unknown') {
+        logLine += `\n  └─ Function: ${entry.functionName}`;
+      }
+      if (entry.fileName && entry.lineNumber) {
+        logLine += `\n  └─ Code: ${entry.fileName}:${entry.lineNumber}`;
+      }
+      if (entry.stackTrace) {
+        logLine += `\n  └─ Stack: ${entry.stackTrace}`;
+      }
+      
+      return logLine;
+    }).join('\n\n');
   };
 
   // Load previous logs from localStorage
@@ -177,6 +244,10 @@
 
   // Wait for DOM to be ready
   function init() {
+    console.log('[ContactForm] 🔧 EXECUTING: init()');
+    console.log('[ContactForm] 🔧 Parameters: none');
+    console.log('[ContactForm] 🔧 Document ready state:', document.readyState);
+    
     // Add download logs button - try multiple times
     const tryAddButton = () => {
       if (document.body) {
@@ -275,7 +346,16 @@
   }
   
   function setupPhoneInput(phoneInput) {
+    console.log('[ContactForm] 🔧 EXECUTING: setupPhoneInput()');
+    console.log('[ContactForm] 🔧 Parameters:', { 
+      phoneInput: phoneInput ? 'found' : 'not found',
+      phoneInputId: phoneInput?.id,
+      phoneInputName: phoneInput?.name,
+      phoneInputType: phoneInput?.type
+    });
+    
     if (!phoneInput) {
+      console.log('[ContactForm] 🔧 setupPhoneInput() - EXIT: no phoneInput');
       return;
     }
     
@@ -410,6 +490,9 @@
   }
   
   function setupEmailForm() {
+    console.log('[ContactForm] 🔧 EXECUTING: setupEmailForm()');
+    console.log('[ContactForm] 🔧 Parameters: none');
+    
     // Find contact form - wait for React to render
     let contactForm = null;
     const maxAttempts = 10;
@@ -429,7 +512,16 @@
   }
   
   function enhanceFormSubmission(contactForm) {
+    console.log('[ContactForm] 🔧 EXECUTING: enhanceFormSubmission()');
+    console.log('[ContactForm] 🔧 Parameters:', { 
+      contactForm: contactForm ? 'found' : 'not found',
+      formId: contactForm?.id,
+      formAction: contactForm?.action,
+      formMethod: contactForm?.method
+    });
+    
     if (contactForm) {
+      console.log('[ContactForm] 🔧 Adding submit event listener to form');
       contactForm.addEventListener('submit', async function(e) {
         console.log('[ContactForm] ========================================');
         console.log('[ContactForm] 🖱️  SUBMIT BUTTON CLICKED');
