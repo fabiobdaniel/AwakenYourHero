@@ -77,8 +77,21 @@ export default async function handler(req, res) {
       }
 
       const data = JSON.parse(responseText);
+      
+      // Validate Resend response
+      if (!data || !data.id) {
+        console.error('Invalid Resend response:', data);
+        throw new Error('Resend API returned invalid response. Check Resend dashboard for details.');
+      }
+      
       console.log('Email sent successfully:', data.id);
-      return res.status(200).json({ success: true, id: data.id });
+      console.log('Email details:', { from: fromEmail, to, subject, resendId: data.id });
+      
+      return res.status(200).json({ 
+        success: true, 
+        id: data.id,
+        message: 'Email queued successfully. Check Resend dashboard to verify delivery.'
+      });
     }
 
     // Option 2: Using Nodemailer with SMTP (if you have SMTP credentials)

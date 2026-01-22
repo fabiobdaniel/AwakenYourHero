@@ -324,9 +324,18 @@
             throw new Error(`Server error (${res.status}): ${text || res.statusText}`);
           }
           
-          if (res.ok) {
+          if (res.ok && json.success) {
             console.log('[ContactForm] Email sent successfully!', json);
-            alert('Message sent successfully! We will get back to you soon.');
+            
+            // Validate that we got a Resend ID
+            if (json.id) {
+              console.log('[ContactForm] Resend email ID:', json.id);
+              alert('Message sent successfully! We will get back to you soon.');
+            } else {
+              console.warn('[ContactForm] No email ID in response:', json);
+              alert('Message submitted, but please verify in Resend dashboard. Check console for details.');
+            }
+            
             contactForm.reset();
             const cs = document.querySelector('.country-code-select');
             if (cs) cs.value = '+1';
