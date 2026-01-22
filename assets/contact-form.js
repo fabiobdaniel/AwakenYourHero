@@ -239,13 +239,20 @@
   function enhanceFormSubmission(contactForm) {
     if (contactForm) {
       contactForm.addEventListener('submit', async function(e) {
+        console.log('[ContactForm] ========================================');
+        console.log('[ContactForm] 🖱️  SUBMIT BUTTON CLICKED');
+        console.log('[ContactForm] ========================================');
+        
         e.preventDefault();
         e.stopImmediatePropagation();
 
+        console.log('[ContactForm] 📝 Step 1: Collecting form data...');
         const formData = new FormData(contactForm);
         const data = {};
         formData.forEach((value, key) => { data[key] = value; });
+        console.log('[ContactForm] 📝 FormData collected:', Object.fromEntries(formData));
         
+        console.log('[ContactForm] 📝 Step 2: Processing form inputs...');
         const formInputs = contactForm.querySelectorAll('input, textarea, select');
         formInputs.forEach(input => {
           if (!input.name) return;
@@ -256,7 +263,9 @@
           else if (n === 'message' || n === 'msg' || n === 'comments') data.message = v || data.message;
           else if (n !== 'phone' && n !== 'tel') data[n] = v || data[n];
         });
+        console.log('[ContactForm] 📝 Processed data:', data);
         
+        console.log('[ContactForm] 📱 Step 3: Processing phone number...');
         const countrySelect = document.querySelector('.country-code-select');
         const phoneInput = document.querySelector('.phone-input-wrapper input') || document.querySelector('input[type="tel"]') || document.querySelector('input[name="phone"]') || document.querySelector('input[id="phone"]');
         if (phoneInput && countrySelect) {
@@ -264,17 +273,24 @@
           const cc = countrySelect.value;
           const opt = countrySelect.options[countrySelect.selectedIndex];
           const flag = opt ? opt.getAttribute('data-flag') : '';
+          console.log('[ContactForm] 📱 Phone input found:', { value: pv, countryCode: cc, flag });
           if (pv) {
             const num = pv.startsWith('+') ? pv : cc + pv.replace(/^\+/, '');
             data.phoneDisplay = flag ? `${flag} ${num}` : num;
+            console.log('[ContactForm] 📱 Phone formatted:', data.phoneDisplay);
           }
         } else if (phoneInput && phoneInput.value.trim()) {
           data.phoneDisplay = phoneInput.value.trim();
+          console.log('[ContactForm] 📱 Phone (no country selector):', data.phoneDisplay);
+        } else {
+          console.log('[ContactForm] 📱 No phone input found');
         }
         
+        console.log('[ContactForm] 📧 Step 4: Building email content...');
         const interestLabels = { coffee: 'Coffee with Fabio', speaking: 'Speaking Engagement', 'break-the-cage': 'Break the Cage Experience', mentoring: 'Mentoring / Coaching', advisory: 'Advisory Services', other: 'Virtual Coffee with Fabio' };
         const interestLabel = interestLabels[data.interest] || data.interest || 'General Inquiry';
         const subject = `${interestLabel} - ${data.name || 'New Contact'}`;
+        console.log('[ContactForm] 📧 Email subject:', subject);
         
         const html = [
           '<h2>New Contact Form Submission</h2>',
@@ -293,12 +309,25 @@
           'Message: ' + (data.message || 'N/A').trim()
         ].join('\n');
 
+        console.log('[ContactForm] 🔘 Step 5: Disabling submit button...');
         const submitBtn = contactForm.querySelector('button[type="submit"]');
         const origText = submitBtn ? submitBtn.textContent : '';
         if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending...'; }
+        console.log('[ContactForm] 🔘 Submit button disabled, text changed to "Sending..."');
 
         try {
-          console.log('[ContactForm] Sending email to API...', { to: 'contact@fabiobdaniel.com', subject });
+          console.log('[ContactForm] ========================================');
+          console.log('[ContactForm] 📤 Step 6: Sending email to API...');
+          console.log('[ContactForm] 📤 Request payload:', { 
+            to: 'contact@fabiobdaniel.com', 
+            replyTo: data.email || undefined,
+            subject: subject,
+            hasHtml: !!html,
+            hasText: !!text
+          });
+          
+          const requestStartTime = Date.now();
+          console.log('[ContactForm] 📤 Fetch request started at:', new Date().toISOString());
           
           const res = await fetch('/api/send-email', {
             method: 'POST',
@@ -312,40 +341,61 @@
             })
           });
           
-          console.log('[ContactForm] API response status:', res.status);
+          const requestDuration = Date.now() - requestStartTime;
+          console.log('[ContactForm] 📥 Step 7: API response received');
+          console.log('[ContactForm] 📥 Response status:', res.status, res.statusText);
+          console.log('[ContactForm] 📥 Request duration:', requestDuration + 'ms');
           
+          console.log('[ContactForm] 📥 Step 8: Parsing response...');
           let json;
           try {
             json = await res.json();
-            console.log('[ContactForm] API response:', json);
+            console.log('[ContactForm] 📥 Response parsed successfully:', json);
           } catch (parseErr) {
-            console.error('[ContactForm] Failed to parse response:', parseErr);
+            console.error('[ContactForm] ❌ Failed to parse JSON response:', parseErr);
             const text = await res.text();
+            console.error('[ContactForm] ❌ Response text:', text);
             throw new Error(`Server error (${res.status}): ${text || res.statusText}`);
           }
           
+          console.log('[ContactForm] ✅ Step 9: Validating response...');
           if (res.ok && json.success) {
-            console.log('[ContactForm] Email sent successfully!', json);
+            console.log('[ContactForm] ✅ Response is OK and success=true');
+            console.log('[ContactForm] ✅ Full response:', json);
             
             // Validate that we got a Resend ID
             if (json.id) {
-              console.log('[ContactForm] Resend email ID:', json.id);
+              console.log('[ContactForm] ========================================');
+              console.log('[ContactForm] ✅✅✅ EMAIL SENT SUCCESSFULLY! ✅✅✅');
+              console.log('[ContactForm] ✅ Resend email ID:', json.id);
+              console.log('[ContactForm] ✅ Message:', json.message || 'No message');
+              console.log('[ContactForm] ========================================');
               alert('Message sent successfully! We will get back to you soon.');
             } else {
-              console.warn('[ContactForm] No email ID in response:', json);
+              console.warn('[ContactForm] ⚠️  Response OK but no email ID:', json);
+              console.warn('[ContactForm] ⚠️  This might indicate the email was not actually sent');
               alert('Message submitted, but please verify in Resend dashboard. Check console for details.');
             }
             
+            console.log('[ContactForm] 🧹 Step 10: Resetting form...');
             contactForm.reset();
             const cs = document.querySelector('.country-code-select');
             if (cs) cs.value = '+1';
+            console.log('[ContactForm] 🧹 Form reset complete');
           } else {
             const errorMsg = json.message || json.error || `HTTP ${res.status}: ${res.statusText}`;
-            console.error('[ContactForm] API error:', errorMsg, json);
+            console.error('[ContactForm] ❌ Response validation failed');
+            console.error('[ContactForm] ❌ Error message:', errorMsg);
+            console.error('[ContactForm] ❌ Full error response:', json);
             throw new Error(errorMsg);
           }
         } catch (err) {
-          console.error('[ContactForm] Error:', err);
+          console.error('[ContactForm] ========================================');
+          console.error('[ContactForm] ❌❌❌ ERROR OCCURRED ❌❌❌');
+          console.error('[ContactForm] ❌ Error type:', err.name);
+          console.error('[ContactForm] ❌ Error message:', err.message);
+          console.error('[ContactForm] ❌ Error stack:', err.stack);
+          console.error('[ContactForm] ========================================');
           
           let errorMsg = 'Error sending message.';
           
@@ -368,7 +418,12 @@
           
           alert(errorMsg);
         } finally {
+          console.log('[ContactForm] 🔄 Step 11: Re-enabling submit button...');
           if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origText; }
+          console.log('[ContactForm] 🔄 Submit button re-enabled');
+          console.log('[ContactForm] ========================================');
+          console.log('[ContactForm] 🏁 PROCESS COMPLETE');
+          console.log('[ContactForm] ========================================');
         }
       }, true);
     }
