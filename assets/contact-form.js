@@ -6,44 +6,78 @@
 
   // Wait for DOM to be ready
   function init() {
-    // Try multiple times to catch React rendering
-    let attempts = 0;
-    const maxAttempts = 20;
-    
-    const trySetup = () => {
-      attempts++;
+    // Continuous monitoring to ensure country selector stays
+    const monitorPhoneInput = () => {
       const phoneInput = findPhoneInput();
       
       if (phoneInput && !phoneInput.closest('.phone-input-wrapper')) {
         setupPhoneInput(phoneInput);
       }
-      
-      if (attempts < maxAttempts) {
-        setTimeout(trySetup, 500);
-      }
     };
     
-    // Start trying immediately and then at intervals
-    trySetup();
+    // Try immediately
+    monitorPhoneInput();
+    
+    // Keep checking periodically (React may re-render)
+    const checkInterval = setInterval(() => {
+      monitorPhoneInput();
+    }, 1000);
+    
+    // Also use MutationObserver for immediate detection
+    const observer = new MutationObserver(() => {
+      monitorPhoneInput();
+    });
+    
+    // Observe the entire document for changes
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+    
+    // Stop monitoring after 2 minutes (form should be loaded by then)
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      observer.disconnect();
+    }, 120000);
+    
     setupEmailForm();
   }
   
   function findPhoneInput() {
-    // Try multiple selectors
-    let phoneInput = document.querySelector('input[type="tel"]');
+    // First, try to find input that's already wrapped but might have lost its wrapper
+    let phoneInput = document.querySelector('.phone-input-wrapper input[type="tel"]');
+    if (phoneInput) {
+      // Check if wrapper still exists
+      if (!phoneInput.closest('.phone-input-wrapper')) {
+        // Wrapper was removed, return the input to be re-wrapped
+        return phoneInput;
+      }
+      // Already wrapped correctly
+      return null;
+    }
+    
+    // Try multiple selectors for unwrapped inputs
+    phoneInput = document.querySelector('input[type="tel"]:not(.phone-input-wrapper input)');
     if (!phoneInput) {
       phoneInput = Array.from(document.querySelectorAll('input')).find(
-        input => input.placeholder && input.placeholder.toLowerCase().includes('phone')
+        input => !input.closest('.phone-input-wrapper') && 
+                 input.placeholder && 
+                 input.placeholder.toLowerCase().includes('phone')
       );
     }
     if (!phoneInput) {
       phoneInput = Array.from(document.querySelectorAll('input')).find(
-        input => input.name && input.name.toLowerCase().includes('phone')
+        input => !input.closest('.phone-input-wrapper') &&
+                 input.name && 
+                 input.name.toLowerCase().includes('phone')
       );
     }
     if (!phoneInput) {
       // Try by id
       phoneInput = document.getElementById('phone');
+      if (phoneInput && phoneInput.closest('.phone-input-wrapper')) {
+        return null; // Already wrapped
+      }
     }
     return phoneInput;
   }
@@ -115,28 +149,72 @@
       
       // Wrap phone input
       const parent = phoneInput.parentNode;
+      if (!parent) return;
+      
+      // Store original parent reference
+      phoneWrapper.dataset.originalParent = parent.tagName;
+      
       parent.insertBefore(phoneWrapper, phoneInput);
       phoneWrapper.appendChild(countrySelect);
       phoneWrapper.appendChild(phoneInput);
       
+      // Mark the input so we can find it even if React replaces it
+      phoneInput.dataset.hasCountrySelector = 'true';
+      countrySelect.dataset.phoneWrapper = 'true';
+      
       // Use MutationObserver to re-apply if React removes it
       const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
+          // Check if wrapper was removed
           mutation.removedNodes.forEach((node) => {
-            if (node === phoneWrapper || (node.nodeType === 1 && node.contains(phoneWrapper))) {
+            if (node === phoneWrapper || (node.nodeType === 1 && node.contains && node.contains(phoneWrapper))) {
               // Wrapper was removed, try to re-add it
               setTimeout(() => {
                 const newPhoneInput = findPhoneInput();
                 if (newPhoneInput && !newPhoneInput.closest('.phone-input-wrapper')) {
                   setupPhoneInput(newPhoneInput);
                 }
-              }, 100);
+              }, 50);
+            }
+          });
+          
+          // Check if input was replaced (React re-render)
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === 1) {
+              const newInput = node.querySelector && node.querySelector('input[type="tel"]');
+              if (newInput && !newInput.closest('.phone-input-wrapper') && !newInput.dataset.hasCountrySelector) {
+                setTimeout(() => {
+                  setupPhoneInput(newInput);
+                }, 50);
+              }
             }
           });
         });
       });
       
-      observer.observe(parent, { childList: true, subtree: true });
+      observer.observe(parent, { 
+        childList: true, 
+        subtree: true,
+        attributes: false
+      });
+      
+      // Also observe the form container for React re-renders
+      const form = phoneInput.closest('form');
+      if (form) {
+        const formObserver = new MutationObserver(() => {
+          setTimeout(() => {
+            const currentInput = findPhoneInput();
+            if (currentInput && !currentInput.closest('.phone-input-wrapper')) {
+              setupPhoneInput(currentInput);
+            }
+          }, 100);
+        });
+        
+        formObserver.observe(form, {
+          childList: true,
+          subtree: true
+        });
+      }
   }
   
   function setupEmailForm() {
