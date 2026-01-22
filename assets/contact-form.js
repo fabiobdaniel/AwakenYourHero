@@ -238,9 +238,11 @@
   
   function enhanceFormSubmission(contactForm) {
     if (contactForm) {
+      // Capture phase + stopImmediatePropagation: our mailto handler runs first, blocks React/others
       contactForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        
+        e.stopImmediatePropagation();
+
         const formData = new FormData(contactForm);
         const data = {};
         formData.forEach((value, key) => {
@@ -332,7 +334,7 @@
         
         const cs = document.querySelector('.country-code-select');
         if (cs) cs.value = '+1';
-      });
+      }, true); // capture: true so we run before React's handler
     }
   }
   
