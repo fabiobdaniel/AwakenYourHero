@@ -1,5 +1,5 @@
 // Contact Form Enhancement
-// Add country code to phone and enable email functionality
+// Add country code to phone; submit via mailto: (no backend, Vercel, or Resend)
 
 (function() {
   'use strict';
@@ -238,7 +238,7 @@
   
   function enhanceFormSubmission(contactForm) {
     if (contactForm) {
-      contactForm.addEventListener('submit', async function(e) {
+      contactForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
         const formData = new FormData(contactForm);
@@ -247,27 +247,21 @@
           data[key] = value;
         });
         
-        // Get all form fields directly (in case FormData doesn't capture everything)
+        // Get all form fields directly
         const formInputs = contactForm.querySelectorAll('input, textarea, select');
         formInputs.forEach(input => {
           if (input.name) {
-            // Try multiple name variations
             const name = input.name;
             const value = input.value;
-            
-            // Map common field names
             if (name === 'fullName' || name === 'name' || name === 'fullname') {
               data.name = value || data.name;
             } else if (name === 'email' || name === 'e-mail') {
               data.email = value || data.email;
-            } else if (name === 'phone' || name === 'tel' || name === 'telephone') {
-              // Don't override phone here, we'll handle it separately
             } else if (name === 'interest' || name === 'interested' || name === 'service') {
               data.interest = value || data.interest;
             } else if (name === 'message' || name === 'msg' || name === 'comments') {
               data.message = value || data.message;
-            } else {
-              // Store with original name
+            } else if (name !== 'phone' && name !== 'tel') {
               data[name] = value || data[name];
             }
           }
@@ -280,143 +274,64 @@
                           document.querySelector('input[name="phone"]') ||
                           document.querySelector('input[id="phone"]');
         
-        let phoneDisplay = '';
-        let phoneNumber = '';
-        
         if (phoneInput && countrySelect) {
           const phoneValue = phoneInput.value.trim();
           const countryCode = countrySelect.value;
           const selectedOption = countrySelect.options[countrySelect.selectedIndex];
           const flag = selectedOption ? selectedOption.getAttribute('data-flag') : '';
           
-          if (phoneValue && !phoneValue.startsWith('+')) {
-            phoneNumber = countryCode + phoneValue.replace(/^\+/, '');
-            phoneDisplay = `${flag} ${phoneNumber}`;
-          } else if (phoneValue) {
-            phoneNumber = phoneValue;
-            phoneDisplay = `${flag} ${phoneNumber}`;
+          if (phoneValue) {
+            const phoneNumber = !phoneValue.startsWith('+') 
+              ? countryCode + phoneValue.replace(/^\+/, '') 
+              : phoneValue;
+            data.phoneDisplay = `${flag} ${phoneNumber}`;
           }
-          
-          data.phone = phoneNumber;
-          data.phoneDisplay = phoneDisplay;
-        } else if (phoneInput) {
-          // If no country selector, use phone value as is
-          data.phone = phoneInput.value.trim();
-          data.phoneDisplay = data.phone;
+        } else if (phoneInput && phoneInput.value.trim()) {
+          data.phoneDisplay = phoneInput.value.trim();
         }
         
-        // Show loading state
-        const submitButton = contactForm.querySelector('button[type="submit"]');
-        const originalText = submitButton ? submitButton.textContent : '';
-        if (submitButton) {
-          submitButton.disabled = true;
-          submitButton.textContent = 'Sending...';
-        }
+        // Format interest for subject
+        const interestLabels = {
+          'coffee': 'Coffee with Fabio',
+          'speaking': 'Speaking Engagement',
+          'break-the-cage': 'Break the Cage Experience',
+          'mentoring': 'Mentoring / Coaching',
+          'advisory': 'Advisory Services',
+          'other': 'Virtual Coffee with Fabio'
+        };
         
-        try {
-          // Format interest for subject
-          const interestLabels = {
-            'coffee': 'Coffee with Fabio',
-            'speaking': 'Speaking Engagement',
-            'break-the-cage': 'Break the Cage Experience',
-            'mentoring': 'Mentoring / Coaching',
-            'advisory': 'Advisory Services',
-            'other': 'Virtual Coffee with Fabio'
-          };
-          
-          const interestLabel = interestLabels[data.interest] || data.interest || 'General Inquiry';
-          const subject = `${interestLabel} - ${data.name || 'New Contact'}`;
-          
-          // Send email using EmailJS or Vercel API
-          const response = await fetch('/api/send-email', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              to: 'contact@fabiobdaniel.com',
-              replyTo: data.email || undefined,
-              subject: subject,
-              html: `
-                <h2>New Contact Form Submission</h2>
-                <p><strong>Interest:</strong> ${interestLabel}</p>
-                <p><strong>Name:</strong> ${data.name || 'N/A'}</p>
-                <p><strong>Email:</strong> <a href="mailto:${data.email || ''}">${data.email || 'N/A'}</a></p>
-                <p><strong>Phone:</strong> ${data.phoneDisplay || data.phone || 'N/A'}</p>
-                <p><strong>Message:</strong></p>
-                <p>${data.message || 'N/A'}</p>
-                <hr>
-                <p><small>Reply to: ${data.email || 'N/A'}</small></p>
-              `,
-              text: `
-                New Contact Form Submission
-                
-                Interest: ${interestLabel}
-                Name: ${data.name || 'N/A'}
-                Email: ${data.email || 'N/A'}
-                Phone: ${data.phoneDisplay || data.phone || 'N/A'}
-                
-                Message:
-                ${data.message || 'N/A'}
-                
-                ---
-                Reply to: ${data.email || 'N/A'}
-              `
-            })
-          });
-          
-          // Check if response is ok before trying to parse JSON
-          let result;
-          try {
-            result = await response.json();
-          } catch (parseError) {
-            console.error('Failed to parse response:', parseError);
-            throw new Error(`Server error (${response.status}): ${response.statusText}`);
-          }
-          
-          if (response.ok) {
-            // Show success message
-            alert('Message sent successfully! We will get back to you soon.');
-            contactForm.reset();
-            
-            // Reset phone country selector to default
-            const countrySelect = document.querySelector('.country-code-select');
-            if (countrySelect) {
-              countrySelect.value = '+1';
-            }
-          } else {
-            // Get error message from response
-            const errorMessage = result?.message || result?.error || `HTTP ${response.status}: ${response.statusText}`;
-            console.error('API Error:', errorMessage, result);
-            throw new Error(errorMessage);
-          }
-        } catch (error) {
-          console.error('Error sending email:', error);
-          
-          // Show specific error message
-          let errorMsg = 'There was an error sending your message.';
-          
-          if (error.message) {
-            if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-              errorMsg += '\n\nNetwork error. Please check your connection and try again.';
-            } else if (error.message.includes('Email service not configured')) {
-              errorMsg += '\n\nEmail service is not configured. Please contact the administrator.';
-            } else if (error.message.includes('Domain not verified') || error.message.includes('Invalid from address')) {
-              errorMsg += '\n\nEmail domain not verified. Please contact the administrator.';
-            } else {
-              errorMsg += `\n\nError: ${error.message}`;
-            }
-          }
-          
-          errorMsg += '\n\nIf the problem persists, please contact us directly at contact@fabiobdaniel.com';
-          
-          alert(errorMsg);
-        } finally {
-          if (submitButton) {
-            submitButton.disabled = false;
-            submitButton.textContent = originalText;
-          }
-        }
+        const interestLabel = interestLabels[data.interest] || data.interest || 'General Inquiry';
+        const subject = `${interestLabel} - ${data.name || 'New Contact'}`;
+        
+        // Build email body (plain text for mailto)
+        const bodyLines = [
+          'New Contact Form Submission',
+          '',
+          'Interest: ' + (interestLabel || 'N/A'),
+          'Name: ' + (data.name || 'N/A'),
+          'Email: ' + (data.email || 'N/A'),
+          'Phone: ' + (data.phoneDisplay || 'N/A'),
+          '',
+          'Message:',
+          (data.message || 'N/A').trim()
+        ];
+        const body = bodyLines.join('\n');
+        
+        // Build mailto URL (no backend, no Vercel, no Resend)
+        const to = 'contact@fabiobdaniel.com';
+        const mailtoUrl = 'mailto:' + to +
+          '?subject=' + encodeURIComponent(subject) +
+          '&body=' + encodeURIComponent(body);
+        
+        // Open default email client
+        window.location.href = mailtoUrl;
+        
+        // Feedback and reset
+        alert('Your email client will open with the message pre-filled. Please click Send to complete.');
+        contactForm.reset();
+        
+        const cs = document.querySelector('.country-code-select');
+        if (cs) cs.value = '+1';
       });
     }
   }
