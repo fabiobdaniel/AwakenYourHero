@@ -6,15 +6,30 @@
 
   // Wait for DOM to be ready
   function init() {
-    // Wait a bit for React to render
-    setTimeout(() => {
-      setupPhoneInput();
-      setupEmailForm();
-    }, 1000);
+    // Try multiple times to catch React rendering
+    let attempts = 0;
+    const maxAttempts = 20;
+    
+    const trySetup = () => {
+      attempts++;
+      const phoneInput = findPhoneInput();
+      
+      if (phoneInput && !phoneInput.closest('.phone-input-wrapper')) {
+        setupPhoneInput(phoneInput);
+      }
+      
+      if (attempts < maxAttempts) {
+        setTimeout(trySetup, 500);
+      }
+    };
+    
+    // Start trying immediately and then at intervals
+    trySetup();
+    setupEmailForm();
   }
   
-  function setupPhoneInput() {
-    // Find phone input field - try multiple selectors
+  function findPhoneInput() {
+    // Try multiple selectors
     let phoneInput = document.querySelector('input[type="tel"]');
     if (!phoneInput) {
       phoneInput = Array.from(document.querySelectorAll('input')).find(
@@ -26,13 +41,29 @@
         input => input.name && input.name.toLowerCase().includes('phone')
       );
     }
+    if (!phoneInput) {
+      // Try by id
+      phoneInput = document.getElementById('phone');
+    }
+    return phoneInput;
+  }
+  
+  function setupPhoneInput(phoneInput) {
+    if (!phoneInput) {
+      return;
+    }
     
-    if (phoneInput) {
-      // Create country code selector
-      const phoneWrapper = document.createElement('div');
+    // Check if already wrapped
+    if (phoneInput.closest('.phone-input-wrapper')) {
+      return;
+    }
+    
+    // Create country code selector
+    const phoneWrapper = document.createElement('div');
       phoneWrapper.className = 'phone-input-wrapper';
       phoneWrapper.style.display = 'flex';
       phoneWrapper.style.gap = '8px';
+      phoneWrapper.style.alignItems = 'center';
       
       const countrySelect = document.createElement('select');
       countrySelect.className = 'country-code-select';
@@ -46,9 +77,11 @@
       countrySelect.style.minWidth = '60px';
       countrySelect.style.textAlign = 'center';
       countrySelect.style.cursor = 'pointer';
+      countrySelect.style.flexShrink = '0';
       
       // Make phone input longer
       phoneInput.style.flex = '1';
+      phoneInput.style.minWidth = '0';
       
       // Add country codes: US (default), BR, MX, then others alphabetically
       const countries = [
@@ -72,6 +105,7 @@
         const option = document.createElement('option');
         option.value = country.code;
         option.setAttribute('data-flag', country.flag);
+        option.setAttribute('data-country-name', country.country);
         option.textContent = country.flag; // Show only flag
         countrySelect.appendChild(option);
       });
@@ -80,11 +114,29 @@
       countrySelect.value = '+1';
       
       // Wrap phone input
-      phoneInput.parentNode.insertBefore(phoneWrapper, phoneInput);
+      const parent = phoneInput.parentNode;
+      parent.insertBefore(phoneWrapper, phoneInput);
       phoneWrapper.appendChild(countrySelect);
       phoneWrapper.appendChild(phoneInput);
       
-    }
+      // Use MutationObserver to re-apply if React removes it
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          mutation.removedNodes.forEach((node) => {
+            if (node === phoneWrapper || (node.nodeType === 1 && node.contains(phoneWrapper))) {
+              // Wrapper was removed, try to re-add it
+              setTimeout(() => {
+                const newPhoneInput = findPhoneInput();
+                if (newPhoneInput && !newPhoneInput.closest('.phone-input-wrapper')) {
+                  setupPhoneInput(newPhoneInput);
+                }
+              }, 100);
+            }
+          });
+        });
+      });
+      
+      observer.observe(parent, { childList: true, subtree: true });
   }
   
   function setupEmailForm() {
