@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     console.log('Email API called:', { method: req.method, body: req.body });
 
     const { to, subject, html, text, replyTo } = req.body || {};
-    const finalTo = process.env.CONTACT_TO || to || 'lcsanxz@gmail.com';
+    const finalTo = process.env.CONTACT_TO || to || 'contact@fabiobdaniel.com';
 
     if (!finalTo || !subject) {
       console.error('Missing required fields:', { to: finalTo, subject });
