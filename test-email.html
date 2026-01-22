@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Configuration Diagnostic</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .status {
+      padding: 15px;
+      border-radius: 6px;
+      margin: 15px 0;
+    }
+    .status.success {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+    .status.warning {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      color: #856404;
+    }
+    .status.error {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+    .status.info {
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      color: #0c5460;
+    }
+    .config-item {
+      margin: 10px 0;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+    .config-item strong {
+      display: inline-block;
+      width: 200px;
+    }
+    .check {
+      color: #28a745;
+      font-weight: bold;
+    }
+    .cross {
+      color: #dc3545;
+      font-weight: bold;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .test-result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 6px;
+      display: none;
+    }
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📧 Email Configuration Diagnostic</h1>
+    <p>This page helps you diagnose email configuration issues.</p>
+    
+    <div id="status-container"></div>
+    
+    <div style="margin-top: 30px;">
+      <button onclick="checkStatus()">🔄 Refresh Status</button>
+      <button onclick="testEmail()">📨 Test Email Send</button>
+    </div>
+    
+    <div id="test-result" class="test-result"></div>
+  </div>
+
+  <script>
+    async function checkStatus() {
+      const container = document.getElementById('status-container');
+      container.innerHTML = '<div class="loading"></div> Loading...';
+      
+      try {
+        const response = await fetch('/api/email-status');
+        const data = await response.json();
+        
+        let html = '<h2>Configuration Status</h2>';
+        
+        // Overall status
+        if (data.activeService === 'none') {
+          html += '<div class="status error">❌ No email service configured</div>';
+        } else if (data.activeService === 'resend') {
+          html += '<div class="status success">✅ Resend is configured</div>';
+        } else {
+          html += '<div class="status info">ℹ️ SMTP is configured</div>';
+        }
+        
+        // Resend configuration
+        html += '<h3>Resend Configuration</h3>';
+        html += '<div class="config-item">';
+        html += `<strong>API Key:</strong> <span class="${data.configured.resend.apiKey ? 'check' : 'cross'}">${data.configured.resend.apiKey ? '✅ Configured' : '❌ Not configured'}</span>`;
+        html += '</div>';
+        
+        if (data.configured.resend.apiKey) {
+          html += '<div class="config-item">';
+          html += `<strong>API Key Valid:</strong> <span>${data.configured.resend.apiKeyValid === true ? '✅ Valid' : data.configured.resend.apiKeyValid === false ? '❌ Invalid' : '❓ Unknown'}</span>`;
+          html += '</div>';
+        }
+        
+        html += '<div class="config-item">';
+        html += `<strong>From Email:</strong> <span>${data.configured.resend.fromEmailValue}</span>`;
+        html += '</div>';
+        
+        // SMTP configuration
+        html += '<h3>SMTP Configuration</h3>';
+        html += '<div class="config-item">';
+        html += `<strong>SMTP:</strong> <span class="${data.configured.smtp.fullyConfigured ? 'check' : 'cross'}">${data.configured.smtp.fullyConfigured ? '✅ Configured' : '❌ Not configured'}</span>`;
+        html += '</div>';
+        
+        // Recommendations
+        if (data.recommendations && data.recommendations.length > 0) {
+          html += '<h3>Recommendations</h3>';
+          data.recommendations.forEach(rec => {
+            const priorityClass = rec.priority === 'high' ? 'error' : rec.priority === 'medium' ? 'warning' : 'info';
+            html += `<div class="status ${priorityClass}">`;
+            html += `<strong>${rec.priority.toUpperCase()}:</strong> ${rec.message}<br>`;
+            html += `<small>${rec.action}</small>`;
+            html += '</div>';
+          });
+        }
+        
+        html += `<p><small>Last checked: ${new Date(data.timestamp).toLocaleString()}</small></p>`;
+        
+        container.innerHTML = html;
+      } catch (error) {
+        container.innerHTML = `<div class="status error">❌ Error loading status: ${error.message}</div>`;
+      }
+    }
+    
+    async function testEmail() {
+      const resultDiv = document.getElementById('test-result');
+      resultDiv.style.display = 'block';
+      resultDiv.className = 'test-result status info';
+      resultDiv.innerHTML = '<div class="loading"></div> Sending test email...';
+      
+      try {
+        const response = await fetch('/api/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: 'contact@fabiobdaniel.com',
+            subject: 'Test Email from Diagnostic Tool',
+            html: '<p>This is a test email from the diagnostic tool.</p>',
+            text: 'This is a test email from the diagnostic tool.'
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          resultDiv.className = 'test-result status success';
+          resultDiv.innerHTML = `✅ <strong>Email sent successfully!</strong><br>ID: ${result.id || 'N/A'}`;
+        } else {
+          resultDiv.className = 'test-result status error';
+          resultDiv.innerHTML = `❌ <strong>Error:</strong> ${result.message || result.error || 'Unknown error'}<br><pre>${JSON.stringify(result, null, 2)}</pre>`;
+        }
+      } catch (error) {
+        resultDiv.className = 'test-result status error';
+        resultDiv.innerHTML = `❌ <strong>Network Error:</strong> ${error.message}`;
+      }
+    }
+    
+    // Load status on page load
+    checkStatus();
+  </script>
+</body>
+</html>
