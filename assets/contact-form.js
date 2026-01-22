@@ -121,51 +121,82 @@
   function addDownloadLogsButton() {
     // Check if button already exists
     if (document.getElementById('download-logs-btn')) {
+      console.log('[ContactForm] 📋 Download logs button already exists');
       return;
     }
 
-    const btn = document.createElement('button');
-    btn.id = 'download-logs-btn';
-    btn.innerHTML = '📥 Download Logs';
-    btn.title = 'Download contact form logs as .log file';
-    btn.style.cssText = `
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 10000;
-      padding: 10px 15px;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 14px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      font-family: system-ui, -apple-system, sans-serif;
-    `;
-    
-    btn.addEventListener('click', () => {
-      window.downloadContactFormLogs();
-    });
+    // Check if body exists
+    if (!document.body) {
+      console.log('[ContactForm] 📋 Body not ready, will retry...');
+      return;
+    }
 
-    btn.addEventListener('mouseenter', () => {
-      btn.style.background = '#0056b3';
-    });
+    try {
+      const btn = document.createElement('button');
+      btn.id = 'download-logs-btn';
+      btn.innerHTML = '📥 Download Logs';
+      btn.title = 'Download contact form logs as .log file';
+      btn.style.cssText = `
+        position: fixed !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        z-index: 999999 !important;
+        padding: 10px 15px !important;
+        background: #007bff !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 5px !important;
+        cursor: pointer !important;
+        font-size: 14px !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
+        font-family: system-ui, -apple-system, sans-serif !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      `;
+      
+      btn.addEventListener('click', () => {
+        window.downloadContactFormLogs();
+      });
 
-    btn.addEventListener('mouseleave', () => {
-      btn.style.background = '#007bff';
-    });
+      btn.addEventListener('mouseenter', () => {
+        btn.style.background = '#0056b3';
+      });
 
-    document.body.appendChild(btn);
-    console.log('[ContactForm] 📋 Download logs button added to page');
+      btn.addEventListener('mouseleave', () => {
+        btn.style.background = '#007bff';
+      });
+
+      document.body.appendChild(btn);
+      console.log('[ContactForm] 📋 Download logs button added to page successfully');
+      console.log('[ContactForm] 📋 Button position:', btn.getBoundingClientRect());
+    } catch (error) {
+      console.error('[ContactForm] 📋 Error adding download logs button:', error);
+    }
   }
 
   // Wait for DOM to be ready
   function init() {
-    // Add download logs button
-    setTimeout(() => {
-      addDownloadLogsButton();
-    }, 2000);
+    // Add download logs button - try multiple times
+    const tryAddButton = () => {
+      if (document.body) {
+        addDownloadLogsButton();
+      }
+    };
+
+    // Try immediately
+    tryAddButton();
+
+    // Try after delays
+    setTimeout(tryAddButton, 500);
+    setTimeout(tryAddButton, 1000);
+    setTimeout(tryAddButton, 2000);
+    setTimeout(tryAddButton, 3000);
+
+    // Also try when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', tryAddButton);
+    }
 
     // Continuous monitoring to ensure country selector stays
     const monitorPhoneInput = () => {
