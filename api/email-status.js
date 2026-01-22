@@ -15,9 +15,6 @@ export default async function handler(req, res) {
 
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
-  const SMTP_HOST = process.env.SMTP_HOST;
-  const SMTP_USER = process.env.SMTP_USER;
-  const SMTP_PASS = process.env.SMTP_PASS;
 
   const status = {
     timestamp: new Date().toISOString(),
@@ -27,20 +24,14 @@ export default async function handler(req, res) {
         fromEmail: !!RESEND_FROM_EMAIL,
         fromEmailValue: RESEND_FROM_EMAIL || 'Awaken Your Hero <onboarding@resend.dev> (default)',
         fullyConfigured: !!RESEND_API_KEY
-      },
-      smtp: {
-        host: !!SMTP_HOST,
-        user: !!SMTP_USER,
-        password: !!SMTP_PASS,
-        fullyConfigured: !!(SMTP_HOST && SMTP_USER && SMTP_PASS)
       }
     },
-    activeService: RESEND_API_KEY ? 'resend' : (SMTP_HOST && SMTP_USER && SMTP_PASS ? 'smtp' : 'none'),
+    activeService: RESEND_API_KEY ? 'resend' : 'none',
     recommendations: []
   };
 
   // Add recommendations
-  if (!RESEND_API_KEY && !(SMTP_HOST && SMTP_USER && SMTP_PASS)) {
+  if (!RESEND_API_KEY) {
     status.recommendations.push({
       priority: 'high',
       message: 'No email service configured. Add RESEND_API_KEY in Vercel Environment Variables.',
