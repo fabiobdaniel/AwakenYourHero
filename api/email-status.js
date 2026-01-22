@@ -65,7 +65,20 @@ export default async function handler(req, res) {
       status.configured.resend.testResponseStatus = testResponse.status;
       const responseText = await testResponse.text();
       
-      if (testResponse.status === 401 || testResponse.status === 403) {
+      // Parse response to check for restricted key message
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        responseData = { message: responseText };
+      }
+      
+      // Check if it's a restricted key (which is OK - it can still send emails)
+      const isRestrictedKey = responseData.name === 'restricted_api_key' || 
+                              (responseData.message && responseData.message.includes('restricted to only send emails'));
+      
+      if (testResponse.status === 401 && !isRestrictedKey) {
+        // Real authentication error
         status.recommendations.push({
           priority: 'high',
           message: 'RESEND_API_KEY appears to be invalid or expired',
@@ -73,8 +86,20 @@ export default async function handler(req, res) {
           details: `Response status: ${testResponse.status}, Response: ${responseText.substring(0, 200)}`
         });
         status.configured.resend.apiKeyValid = false;
-      } else if (testResponse.ok) {
+      } else if (testResponse.status === 401 && isRestrictedKey) {
+        // Restricted key is valid for sending emails (which is what we need!)
         status.configured.resend.apiKeyValid = true;
+        status.configured.resend.isRestrictedKey = true;
+        status.recommendations.push({
+          priority: 'info',
+          message: 'API key is restricted to sending emails only (this is fine!)',
+          action: 'The key can send emails, which is all that is needed.',
+          details: 'Restricted keys are perfect for sending emails and provide better security.'
+        });
+      } else if (testResponse.ok) {
+        // Full access key
+        status.configured.resend.apiKeyValid = true;
+        status.configured.resend.isRestrictedKey = false;
       } else {
         status.configured.resend.apiKeyValid = 'unknown';
         status.recommendations.push({
