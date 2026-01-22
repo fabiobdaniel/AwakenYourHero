@@ -48,6 +48,11 @@ export default async function handler(req, res) {
   }
 
   if (RESEND_API_KEY) {
+    // Add debug info about the API key
+    status.configured.resend.apiKeyLength = RESEND_API_KEY.length;
+    status.configured.resend.apiKeyPrefix = RESEND_API_KEY.substring(0, 3);
+    status.configured.resend.apiKeyStartsWithRe = RESEND_API_KEY.startsWith('re_');
+    
     // Test if API key is valid by making a simple request
     try {
       const testResponse = await fetch('https://api.resend.com/domains', {
@@ -57,22 +62,36 @@ export default async function handler(req, res) {
         },
       });
 
+      status.configured.resend.testResponseStatus = testResponse.status;
+      const responseText = await testResponse.text();
+      
       if (testResponse.status === 401 || testResponse.status === 403) {
         status.recommendations.push({
           priority: 'high',
           message: 'RESEND_API_KEY appears to be invalid or expired',
-          action: 'Generate a new API key at https://resend.com/api-keys'
+          action: 'Generate a new API key at https://resend.com/api-keys',
+          details: `Response status: ${testResponse.status}, Response: ${responseText.substring(0, 200)}`
         });
         status.configured.resend.apiKeyValid = false;
       } else if (testResponse.ok) {
         status.configured.resend.apiKeyValid = true;
+      } else {
+        status.configured.resend.apiKeyValid = 'unknown';
+        status.recommendations.push({
+          priority: 'medium',
+          message: `Unexpected response from Resend API: ${testResponse.status}`,
+          action: 'Check API key and Resend account status',
+          details: responseText.substring(0, 200)
+        });
       }
     } catch (error) {
       status.configured.resend.apiKeyValid = 'unknown';
+      status.configured.resend.testError = error.message;
       status.recommendations.push({
         priority: 'low',
         message: 'Could not verify API key validity',
-        action: 'Check network connection'
+        action: 'Check network connection',
+        details: error.message
       });
     }
   }
