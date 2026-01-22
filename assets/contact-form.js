@@ -4,8 +4,169 @@
 (function() {
   'use strict';
 
+  // ========================================
+  // LOG FILE SYSTEM
+  // ========================================
+  const logEntries = [];
+  const MAX_LOG_ENTRIES = 1000; // Keep last 1000 entries
+
+  // Intercept console.log for ContactForm
+  const originalConsoleLog = console.log;
+  const originalConsoleError = console.error;
+  const originalConsoleWarn = console.warn;
+
+  function addToLog(level, ...args) {
+    const timestamp = new Date().toISOString();
+    const message = args.map(arg => {
+      if (typeof arg === 'object') {
+        try {
+          return JSON.stringify(arg, null, 2);
+        } catch (e) {
+          return String(arg);
+        }
+      }
+      return String(arg);
+    }).join(' ');
+
+    const logEntry = {
+      timestamp,
+      level,
+      message,
+      fullArgs: args
+    };
+
+    logEntries.push(logEntry);
+    
+    // Keep only last MAX_LOG_ENTRIES
+    if (logEntries.length > MAX_LOG_ENTRIES) {
+      logEntries.shift();
+    }
+
+    // Also save to localStorage (last 100 entries)
+    try {
+      const recentLogs = logEntries.slice(-100);
+      localStorage.setItem('contactFormLogs', JSON.stringify(recentLogs));
+    } catch (e) {
+      // Ignore localStorage errors
+    }
+  }
+
+  // Override console methods for ContactForm logs
+  console.log = function(...args) {
+    originalConsoleLog.apply(console, args);
+    if (args[0] && typeof args[0] === 'string' && args[0].includes('[ContactForm]')) {
+      addToLog('LOG', ...args);
+    }
+  };
+
+  console.error = function(...args) {
+    originalConsoleError.apply(console, args);
+    if (args[0] && typeof args[0] === 'string' && args[0].includes('[ContactForm]')) {
+      addToLog('ERROR', ...args);
+    }
+  };
+
+  console.warn = function(...args) {
+    originalConsoleWarn.apply(console, args);
+    if (args[0] && typeof args[0] === 'string' && args[0].includes('[ContactForm]')) {
+      addToLog('WARN', ...args);
+    }
+  };
+
+  // Function to download logs as file
+  window.downloadContactFormLogs = function() {
+    if (logEntries.length === 0) {
+      alert('No logs available. Submit the form first to generate logs.');
+      return;
+    }
+
+    const logText = logEntries.map(entry => {
+      return `[${entry.timestamp}] [${entry.level}] ${entry.message}`;
+    }).join('\n');
+
+    const blob = new Blob([logText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `contact-form-logs-${new Date().toISOString().replace(/[:.]/g, '-')}.log`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Function to get logs as text
+  window.getContactFormLogs = function() {
+    return logEntries.map(entry => {
+      return `[${entry.timestamp}] [${entry.level}] ${entry.message}`;
+    }).join('\n');
+  };
+
+  // Load previous logs from localStorage
+  try {
+    const savedLogs = localStorage.getItem('contactFormLogs');
+    if (savedLogs) {
+      const parsed = JSON.parse(savedLogs);
+      logEntries.push(...parsed);
+      console.log('[ContactForm] 📋 Loaded', parsed.length, 'previous log entries from localStorage');
+    }
+  } catch (e) {
+    // Ignore
+  }
+
+  console.log('[ContactForm] 📋 Log file system initialized. Use downloadContactFormLogs() to download logs.');
+  // ========================================
+
+  // Add download logs button
+  function addDownloadLogsButton() {
+    // Check if button already exists
+    if (document.getElementById('download-logs-btn')) {
+      return;
+    }
+
+    const btn = document.createElement('button');
+    btn.id = 'download-logs-btn';
+    btn.innerHTML = '📥 Download Logs';
+    btn.title = 'Download contact form logs as .log file';
+    btn.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10000;
+      padding: 10px 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      font-family: system-ui, -apple-system, sans-serif;
+    `;
+    
+    btn.addEventListener('click', () => {
+      window.downloadContactFormLogs();
+    });
+
+    btn.addEventListener('mouseenter', () => {
+      btn.style.background = '#0056b3';
+    });
+
+    btn.addEventListener('mouseleave', () => {
+      btn.style.background = '#007bff';
+    });
+
+    document.body.appendChild(btn);
+    console.log('[ContactForm] 📋 Download logs button added to page');
+  }
+
   // Wait for DOM to be ready
   function init() {
+    // Add download logs button
+    setTimeout(() => {
+      addDownloadLogsButton();
+    }, 2000);
+
     // Continuous monitoring to ensure country selector stays
     const monitorPhoneInput = () => {
       const phoneInput = findPhoneInput();
