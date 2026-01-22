@@ -26,7 +26,7 @@ export default async function handler(req, res) {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: 'Awaken Your Hero <noreply@awakenyourhero.com>',
+          from: process.env.RESEND_FROM_EMAIL || 'Awaken Your Hero <onboarding@resend.dev>',
           to: [to],
           subject: subject,
           html: html || text,
@@ -35,8 +35,10 @@ export default async function handler(req, res) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to send email');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+        console.error('Resend API error:', errorMessage, errorData);
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -80,9 +82,12 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('Email error:', error);
+    
+    // Return detailed error for debugging (you can remove details in production)
     return res.status(500).json({ 
       error: 'Failed to send email',
-      message: error.message 
+      message: error.message || 'Unknown error occurred',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 }

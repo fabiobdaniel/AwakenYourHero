@@ -8,9 +8,14 @@ O formulário de contato está configurado para enviar emails para `contact@fabi
 
 1. Crie uma conta em [Resend](https://resend.com)
 2. Obtenha sua API Key
-3. Na Vercel, vá em Settings → Environment Variables
-4. Adicione:
+3. **Configure o domínio** (importante):
+   - Vá em [Resend Dashboard → Domains](https://resend.com/domains)
+   - Adicione e verifique o domínio `awakenyourhero.com` (ou outro domínio que você controle)
+   - Ou use temporariamente `onboarding@resend.dev` para testes
+4. Na Vercel, vá em Settings → Environment Variables
+5. Adicione:
    - `RESEND_API_KEY` = sua chave da API Resend
+   - `RESEND_FROM_EMAIL` = email remetente (ex: `Awaken Your Hero <noreply@awakenyourhero.com>` ou `onboarding@resend.dev` para testes)
 
 ### Opção 2: Usando SMTP
 

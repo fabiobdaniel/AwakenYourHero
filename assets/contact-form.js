@@ -192,16 +192,52 @@
             })
           });
           
+          // Check if response is ok before trying to parse JSON
+          let result;
+          try {
+            result = await response.json();
+          } catch (parseError) {
+            console.error('Failed to parse response:', parseError);
+            throw new Error(`Server error (${response.status}): ${response.statusText}`);
+          }
+          
           if (response.ok) {
             // Show success message
             alert('Message sent successfully! We will get back to you soon.');
             contactForm.reset();
+            
+            // Reset phone country selector to default
+            const countrySelect = document.querySelector('.country-code-select');
+            if (countrySelect) {
+              countrySelect.value = '+1';
+            }
           } else {
-            throw new Error('Failed to send message');
+            // Get error message from response
+            const errorMessage = result?.message || result?.error || `HTTP ${response.status}: ${response.statusText}`;
+            console.error('API Error:', errorMessage, result);
+            throw new Error(errorMessage);
           }
         } catch (error) {
           console.error('Error sending email:', error);
-          alert('There was an error sending your message. Please try again or contact us directly at contact@fabiobdaniel.com');
+          
+          // Show specific error message
+          let errorMsg = 'There was an error sending your message.';
+          
+          if (error.message) {
+            if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+              errorMsg += '\n\nNetwork error. Please check your connection and try again.';
+            } else if (error.message.includes('Email service not configured')) {
+              errorMsg += '\n\nEmail service is not configured. Please contact the administrator.';
+            } else if (error.message.includes('Domain not verified') || error.message.includes('Invalid from address')) {
+              errorMsg += '\n\nEmail domain not verified. Please contact the administrator.';
+            } else {
+              errorMsg += `\n\nError: ${error.message}`;
+            }
+          }
+          
+          errorMsg += '\n\nIf the problem persists, please contact us directly at contact@fabiobdaniel.com';
+          
+          alert(errorMsg);
         } finally {
           if (submitButton) {
             submitButton.disabled = false;
