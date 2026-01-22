@@ -1,5 +1,5 @@
 // Contact Form Enhancement
-// Add country code to phone; submit via mailto: (no backend, Vercel, or Resend)
+// Add country code to phone; submit via Vercel API + Resend
 
 (function() {
   'use strict';
@@ -238,118 +238,93 @@
   
   function enhanceFormSubmission(contactForm) {
     if (contactForm) {
-      // Capture phase + stopImmediatePropagation: our mailto handler runs first, blocks React/others
-      contactForm.addEventListener('submit', function(e) {
+      contactForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         e.stopImmediatePropagation();
 
         const formData = new FormData(contactForm);
         const data = {};
-        formData.forEach((value, key) => {
-          data[key] = value;
-        });
+        formData.forEach((value, key) => { data[key] = value; });
         
-        // Get all form fields directly
         const formInputs = contactForm.querySelectorAll('input, textarea, select');
         formInputs.forEach(input => {
-          if (input.name) {
-            const name = input.name;
-            const value = input.value;
-            if (name === 'fullName' || name === 'name' || name === 'fullname') {
-              data.name = value || data.name;
-            } else if (name === 'email' || name === 'e-mail') {
-              data.email = value || data.email;
-            } else if (name === 'interest' || name === 'interested' || name === 'service') {
-              data.interest = value || data.interest;
-            } else if (name === 'message' || name === 'msg' || name === 'comments') {
-              data.message = value || data.message;
-            } else if (name !== 'phone' && name !== 'tel') {
-              data[name] = value || data[name];
-            }
-          }
+          if (!input.name) return;
+          const n = input.name, v = input.value;
+          if (n === 'fullName' || n === 'name' || n === 'fullname') data.name = v || data.name;
+          else if (n === 'email' || n === 'e-mail') data.email = v || data.email;
+          else if (n === 'interest' || n === 'interested' || n === 'service') data.interest = v || data.interest;
+          else if (n === 'message' || n === 'msg' || n === 'comments') data.message = v || data.message;
+          else if (n !== 'phone' && n !== 'tel') data[n] = v || data[n];
         });
         
-        // Get phone with country code and flag
         const countrySelect = document.querySelector('.country-code-select');
-        const phoneInput = document.querySelector('.phone-input-wrapper input') || 
-                          document.querySelector('input[type="tel"]') ||
-                          document.querySelector('input[name="phone"]') ||
-                          document.querySelector('input[id="phone"]');
-        
+        const phoneInput = document.querySelector('.phone-input-wrapper input') || document.querySelector('input[type="tel"]') || document.querySelector('input[name="phone"]') || document.querySelector('input[id="phone"]');
         if (phoneInput && countrySelect) {
-          const phoneValue = phoneInput.value.trim();
-          const countryCode = countrySelect.value;
-          const selectedOption = countrySelect.options[countrySelect.selectedIndex];
-          const flag = selectedOption ? selectedOption.getAttribute('data-flag') : '';
-          
-          if (phoneValue) {
-            const phoneNumber = !phoneValue.startsWith('+') 
-              ? countryCode + phoneValue.replace(/^\+/, '') 
-              : phoneValue;
-            data.phoneDisplay = `${flag} ${phoneNumber}`;
+          const pv = phoneInput.value.trim();
+          const cc = countrySelect.value;
+          const opt = countrySelect.options[countrySelect.selectedIndex];
+          const flag = opt ? opt.getAttribute('data-flag') : '';
+          if (pv) {
+            const num = pv.startsWith('+') ? pv : cc + pv.replace(/^\+/, '');
+            data.phoneDisplay = flag ? `${flag} ${num}` : num;
           }
         } else if (phoneInput && phoneInput.value.trim()) {
           data.phoneDisplay = phoneInput.value.trim();
         }
         
-        // Format interest for subject
-        const interestLabels = {
-          'coffee': 'Coffee with Fabio',
-          'speaking': 'Speaking Engagement',
-          'break-the-cage': 'Break the Cage Experience',
-          'mentoring': 'Mentoring / Coaching',
-          'advisory': 'Advisory Services',
-          'other': 'Virtual Coffee with Fabio'
-        };
-        
+        const interestLabels = { coffee: 'Coffee with Fabio', speaking: 'Speaking Engagement', 'break-the-cage': 'Break the Cage Experience', mentoring: 'Mentoring / Coaching', advisory: 'Advisory Services', other: 'Virtual Coffee with Fabio' };
         const interestLabel = interestLabels[data.interest] || data.interest || 'General Inquiry';
         const subject = `${interestLabel} - ${data.name || 'New Contact'}`;
         
-        // Build email body (plain text for mailto)
-        const bodyLines = [
+        const html = [
+          '<h2>New Contact Form Submission</h2>',
+          '<p><strong>Interest:</strong> ' + (interestLabel || 'N/A') + '</p>',
+          '<p><strong>Name:</strong> ' + (data.name || 'N/A') + '</p>',
+          '<p><strong>Email:</strong> ' + (data.email || 'N/A') + '</p>',
+          '<p><strong>Phone:</strong> ' + (data.phoneDisplay || 'N/A') + '</p>',
+          '<p><strong>Message:</strong></p><p>' + (data.message || 'N/A').trim() + '</p>'
+        ].join('');
+        const text = [
           'New Contact Form Submission',
-          '',
           'Interest: ' + (interestLabel || 'N/A'),
           'Name: ' + (data.name || 'N/A'),
           'Email: ' + (data.email || 'N/A'),
           'Phone: ' + (data.phoneDisplay || 'N/A'),
-          '',
-          'Message:',
-          (data.message || 'N/A').trim()
-        ];
-        let body = bodyLines.join('\n');
-        // Some clients limit mailto URL length; keep body under ~1500 chars
-        if (body.length > 1500) {
-          body = body.slice(0, 1497) + '...';
+          'Message: ' + (data.message || 'N/A').trim()
+        ].join('\n');
+
+        const submitBtn = contactForm.querySelector('button[type="submit"]');
+        const origText = submitBtn ? submitBtn.textContent : '';
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending...'; }
+
+        try {
+          const res = await fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: 'contact@fabiobdaniel.com',
+              replyTo: data.email || undefined,
+              subject: subject,
+              html: html,
+              text: text
+            })
+          });
+          const json = await res.json();
+          if (res.ok) {
+            alert('Message sent successfully! We will get back to you soon.');
+            contactForm.reset();
+            const cs = document.querySelector('.country-code-select');
+            if (cs) cs.value = '+1';
+          } else {
+            throw new Error(json.message || json.error || 'Failed to send');
+          }
+        } catch (err) {
+          console.error('[ContactForm]', err);
+          alert('Error sending message. Please try again or email contact@fabiobdaniel.com directly.');
+        } finally {
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origText; }
         }
-        
-        // Build mailto URL (no backend, no Vercel, no Resend)
-        const to = 'contact@fabiobdaniel.com';
-        const mailtoUrl = 'mailto:' + to +
-          '?subject=' + encodeURIComponent(subject) +
-          '&body=' + encodeURIComponent(body);
-        
-        // Open email client: use <a> click (more reliable than location.href)
-        const link = document.createElement('a');
-        link.href = mailtoUrl;
-        link.setAttribute('target', '_blank');
-        link.setAttribute('rel', 'noopener');
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Feedback and reset
-        alert(
-          'Your email app should open with the message pre-filled.\n\n' +
-          '→ Click SEND in your email app to complete.\n\n' +
-          'If nothing opened, email us at contact@fabiobdaniel.com with your details.'
-        );
-        contactForm.reset();
-        
-        const cs = document.querySelector('.country-code-select');
-        if (cs) cs.value = '+1';
-      }, true); // capture: true so we run before React's handler
+      }, true);
     }
   }
   
