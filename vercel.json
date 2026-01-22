@@ -5,7 +5,11 @@
       "destination": "/api/$1"
     },
     {
-      "source": "/((?!assets/|api/).*)",
+      "source": "/test-email.html",
+      "destination": "/test-email.html"
+    },
+    {
+      "source": "/((?!assets/|api/|test-email.html).*)",
       "destination": "/index.html"
     }
   ]
