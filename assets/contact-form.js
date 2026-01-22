@@ -317,7 +317,11 @@
           'Message:',
           (data.message || 'N/A').trim()
         ];
-        const body = bodyLines.join('\n');
+        let body = bodyLines.join('\n');
+        // Some clients limit mailto URL length; keep body under ~1500 chars
+        if (body.length > 1500) {
+          body = body.slice(0, 1497) + '...';
+        }
         
         // Build mailto URL (no backend, no Vercel, no Resend)
         const to = 'contact@fabiobdaniel.com';
@@ -325,11 +329,22 @@
           '?subject=' + encodeURIComponent(subject) +
           '&body=' + encodeURIComponent(body);
         
-        // Open default email client
-        window.location.href = mailtoUrl;
+        // Open email client: use <a> click (more reliable than location.href)
+        const link = document.createElement('a');
+        link.href = mailtoUrl;
+        link.setAttribute('target', '_blank');
+        link.setAttribute('rel', 'noopener');
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         
         // Feedback and reset
-        alert('Your email client will open with the message pre-filled. Please click Send to complete.');
+        alert(
+          'Your email app should open with the message pre-filled.\n\n' +
+          '→ Click SEND in your email app to complete.\n\n' +
+          'If nothing opened, email us at contact@fabiobdaniel.com with your details.'
+        );
         contactForm.reset();
         
         const cs = document.querySelector('.country-code-select');
