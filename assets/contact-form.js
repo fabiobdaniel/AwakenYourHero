@@ -298,6 +298,8 @@
         if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending...'; }
 
         try {
+          console.log('[ContactForm] Sending email to API...', { to: 'contact@fabiobdaniel.com', subject });
+          
           const res = await fetch('/api/send-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -309,18 +311,53 @@
               text: text
             })
           });
-          const json = await res.json();
+          
+          console.log('[ContactForm] API response status:', res.status);
+          
+          let json;
+          try {
+            json = await res.json();
+            console.log('[ContactForm] API response:', json);
+          } catch (parseErr) {
+            console.error('[ContactForm] Failed to parse response:', parseErr);
+            const text = await res.text();
+            throw new Error(`Server error (${res.status}): ${text || res.statusText}`);
+          }
+          
           if (res.ok) {
+            console.log('[ContactForm] Email sent successfully!', json);
             alert('Message sent successfully! We will get back to you soon.');
             contactForm.reset();
             const cs = document.querySelector('.country-code-select');
             if (cs) cs.value = '+1';
           } else {
-            throw new Error(json.message || json.error || 'Failed to send');
+            const errorMsg = json.message || json.error || `HTTP ${res.status}: ${res.statusText}`;
+            console.error('[ContactForm] API error:', errorMsg, json);
+            throw new Error(errorMsg);
           }
         } catch (err) {
-          console.error('[ContactForm]', err);
-          alert('Error sending message. Please try again or email contact@fabiobdaniel.com directly.');
+          console.error('[ContactForm] Error:', err);
+          
+          let errorMsg = 'Error sending message.';
+          
+          if (err.message) {
+            if (err.message.includes('Email service not configured')) {
+              errorMsg = 'Email service not configured. Please check Vercel environment variables (RESEND_API_KEY).';
+            } else if (err.message.includes('Domain not verified') || err.message.includes('Invalid from address')) {
+              errorMsg = 'Email domain not verified. Using onboarding@resend.dev for now.';
+            } else if (err.message.includes('Unauthorized') || err.message.includes('Invalid API key')) {
+              errorMsg = 'Invalid API key. Please check RESEND_API_KEY in Vercel.';
+            } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+              errorMsg = 'Network error. Please check your connection.';
+            } else {
+              errorMsg = `Error: ${err.message}`;
+            }
+          }
+          
+          errorMsg += '\n\nCheck the browser console (F12) for details.';
+          errorMsg += '\n\nIf the problem persists, email contact@fabiobdaniel.com directly.';
+          
+          alert(errorMsg);
         } finally {
           if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origText; }
         }
