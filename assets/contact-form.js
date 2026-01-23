@@ -850,7 +850,189 @@
     }
   }
   
-  // Initialize when DOM is ready
+  // ========================================
+  // NEWSLETTER FORM FUNCTIONALITY
+  // ========================================
+  
+  function setupNewsletterForm() {
+    console.log('[Newsletter] 🔧 EXECUTING: setupNewsletterForm()');
+    console.log('[Newsletter] 🔧 Document ready state:', document.readyState);
+    
+    if (!window.__newsletterListenerAdded) {
+      console.log('[Newsletter] 🔧 Adding newsletter form listener');
+      
+      // Try to find newsletter form immediately
+      const newsletterButton = Array.from(document.querySelectorAll('button')).find(btn => 
+        btn.textContent.includes('NEWSLETTER') || 
+        btn.textContent.includes('newsletter') || 
+        btn.textContent.includes('JOIN')
+      );
+      console.log('[Newsletter] 🔍 Newsletter button found:', !!newsletterButton);
+      if (newsletterButton) {
+        console.log('[Newsletter] 🔍 Button text:', newsletterButton.textContent);
+      }
+      
+      const handleNewsletterSubmit = async function(e) {
+        console.log('[Newsletter] 🔍 Event detected:', e.type, e.target);
+        
+        // Find newsletter form elements
+        let emailInput = null;
+        let form = null;
+        let button = null;
+        
+        if (e.type === 'submit') {
+          form = e.target.closest('form') || e.target;
+          console.log('[Newsletter] 🔍 Submit event - form found:', !!form);
+          if (form) {
+            emailInput = form.querySelector('input[type="email"]') || 
+                         form.querySelector('input[name="email"]') ||
+                         form.querySelector('input[placeholder*="email" i]');
+            button = form.querySelector('button[type="submit"]') || 
+                     form.querySelector('button');
+            console.log('[Newsletter] 🔍 Email input found:', !!emailInput);
+            console.log('[Newsletter] 🔍 Button found:', !!button);
+          }
+        } else if (e.type === 'click') {
+          button = e.target.closest('button') || e.target;
+          console.log('[Newsletter] 🔍 Click event - button found:', !!button);
+          if (button) {
+            const buttonText = button.textContent || '';
+            console.log('[Newsletter] 🔍 Button text:', buttonText);
+            
+            // Check if button is newsletter-related
+            if (buttonText.includes('NEWSLETTER') || 
+                buttonText.includes('newsletter') ||
+                buttonText.includes('JOIN')) {
+              form = button.closest('form') || 
+                     button.closest('div')?.closest('form') ||
+                     document.querySelector('form');
+              emailInput = form ? (form.querySelector('input[type="email"]') || 
+                                  form.querySelector('input[name="email"]') ||
+                                  form.querySelector('input[placeholder*="email" i]')) : null;
+              console.log('[Newsletter] 🔍 Newsletter button detected!');
+            } else {
+              console.log('[Newsletter] 🔍 Not a newsletter button, ignoring');
+              return;
+            }
+          }
+        }
+        
+        // Check if this is a newsletter form
+        if (!emailInput) {
+          console.log('[Newsletter] 🔍 No email input found, ignoring');
+          return; // Not a newsletter form, let other handlers process it
+        }
+        
+        if (!form) {
+          console.log('[Newsletter] 🔍 No form found, ignoring');
+          return;
+        }
+        
+        // Verify it's a newsletter form by checking button text or form context
+        const formButton = form.querySelector('button');
+        const buttonText = (button?.textContent || formButton?.textContent || '').toUpperCase();
+        const isNewsletterForm = buttonText.includes('NEWSLETTER') ||
+                                buttonText.includes('JOIN');
+        
+        console.log('[Newsletter] 🔍 Is newsletter form?', isNewsletterForm);
+        console.log('[Newsletter] 🔍 Button text checked:', buttonText);
+        
+        if (!isNewsletterForm) {
+          console.log('[Newsletter] 🔍 Not a newsletter form, ignoring');
+          return; // Not a newsletter form
+        }
+        
+        console.log('[Newsletter] ========================================');
+        console.log('[Newsletter] 🖱️  NEWSLETTER FORM SUBMITTED');
+        console.log('[Newsletter] ========================================');
+        
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        
+        const email = emailInput.value.trim();
+        
+        if (!email) {
+          console.error('[Newsletter] ❌ No email provided');
+          alert('Please enter your email address.');
+          return;
+        }
+        
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          console.error('[Newsletter] ❌ Invalid email format:', email);
+          alert('Please enter a valid email address.');
+          return;
+        }
+        
+        console.log('[Newsletter] 📧 Email to subscribe:', email);
+        
+        // Find button to disable (if not already found)
+        if (!button) {
+          button = form.querySelector('button[type="submit"]') || 
+                   form.querySelector('button');
+        }
+        
+        // Disable button
+        const origButtonState = button ? {
+          disabled: button.disabled,
+          text: button.textContent
+        } : null;
+        
+        if (button) {
+          button.disabled = true;
+          button.textContent = 'Subscribing...';
+        }
+        
+        try {
+          console.log('[Newsletter] 📤 Sending newsletter subscription...');
+          
+          // ✨ Usar EmailServiceModule (módulo modularizado)
+          const EmailServiceModule = await import('/assets/email-client-module.js');
+          const response = await EmailServiceModule.emailClient.sendNewsletterSubscription(email);
+          
+          console.log('[Newsletter] ✅ Newsletter subscription sent successfully!');
+          console.log('[Newsletter] ✅ Resend ID:', response.id);
+          alert('Thank you for subscribing to our newsletter!');
+          emailInput.value = ''; // Clear email field
+        } catch (err) {
+          console.error('[Newsletter] ❌ Error sending newsletter subscription:', err);
+          let errorMsg = 'Error subscribing to newsletter.';
+          if (err.message) {
+            errorMsg = `Error: ${err.message}`;
+          }
+          alert(errorMsg + '\n\nPlease try again later or contact us directly.');
+        } finally {
+          if (button && origButtonState) {
+            button.disabled = origButtonState.disabled;
+            button.textContent = origButtonState.text;
+          }
+        }
+      };
+      
+      // Add listeners for newsletter form
+      document.addEventListener('submit', handleNewsletterSubmit, true);
+      document.addEventListener('click', handleNewsletterSubmit, true);
+      
+      window.__newsletterListenerAdded = true;
+      console.log('[Newsletter] ✅ Newsletter form listener added');
+    }
+  }
+  
+  // Initialize newsletter form handler FIRST (before contact form)
+  // This ensures newsletter handler runs before contact form handler
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupNewsletterForm);
+  } else {
+    setupNewsletterForm();
+  }
+  
+  // Also try after delays (React may render later)
+  setTimeout(setupNewsletterForm, 1000);
+  setTimeout(setupNewsletterForm, 3000);
+  setTimeout(setupNewsletterForm, 5000);
+
+  // Initialize when DOM is ready (AFTER newsletter)
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
@@ -880,4 +1062,5 @@
     console.log('[ContactForm] 📋 Window loaded, attempting to add button');
     addDownloadLogsButton();
   });
+  
 })();
