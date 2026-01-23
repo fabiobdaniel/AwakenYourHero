@@ -1130,4 +1130,25 @@
     addDownloadLogsButton();
   });
   
+  // ========================================
+  // INITIALIZE "BUY BOOK" BUTTON SERVICE (SOLID)
+  // ========================================
+  async function initBuyBookButtonService() {
+    try {
+      const { BuyBookButtonService } = await import('/assets/button-service/index.js');
+      const buyBookService = new BuyBookButtonService();
+      buyBookService.init();
+      console.log('[ContactForm] ✅ Buy Book Button Service initialized (SOLID)');
+    } catch (error) {
+      console.error('[ContactForm] ❌ Error initializing Buy Book Button Service:', error);
+      // Retry after a delay
+      setTimeout(() => {
+        initBuyBookButtonService();
+      }, 2000);
+    }
+  }
+  
+  // Initialize Buy Book button service
+  initBuyBookButtonService();
+  
 })();

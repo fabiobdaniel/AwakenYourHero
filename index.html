@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
     <title>Awaken Your Hero | Novawep</title>
     <meta name="description" content="Break internal and external limitations. Build your future through discipline, decisions, and intentional action.">
     <meta name="author" content="FBD Company" />
@@ -22,7 +22,7 @@
   <link rel="icon" type="image/x-icon" href="https://storage.googleapis.com/gpt-engineer-file-uploads/mY9i7pnNdZgSBdx9qt26Yb9neWx2/uploads/1768309326004-NOVAWEP.webp">
   <script type="module" crossorigin src="/assets/index-D4EisZyU.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-cSBRx8rT.css">
-    <script src="/assets/contact-form.js?v=email-service-module-fix3" defer></script>
+    <script src="/assets/contact-form.js?v=solid-button-service" defer></script>
 <script defer src="https://awakenyourhero.novawep.com/~flock.js" data-proxy-url="https://awakenyourhero.novawep.com/~api/analytics"></script></head>
 
   <body>
@@ -39,6 +39,258 @@
         width: 0 !important;
         height: 0 !important;
         overflow: hidden !important;
+      }
+      
+      /* Fix text cutting on mobile - Base styles */
+      html, body {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+        width: 100% !important;
+        position: relative !important;
+      }
+      
+      #root {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+        width: 100% !important;
+        position: relative !important;
+      }
+      
+      /* Ensure text wraps properly on mobile */
+      @media (max-width: 768px) {
+        /* Global text wrapping - AGGRESSIVE */
+        * {
+          word-wrap: break-word !important;
+          overflow-wrap: break-word !important;
+          hyphens: auto !important;
+          -webkit-hyphens: auto !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        
+        /* Prevent ALL horizontal overflow */
+        html, body, #root {
+          width: 100% !important;
+          max-width: 100vw !important;
+          overflow-x: hidden !important;
+          position: relative !important;
+        }
+        
+        /* Force all direct children of root to respect width */
+        #root > * {
+          max-width: 100% !important;
+          width: 100% !important;
+          overflow-x: hidden !important;
+        }
+        
+        /* Headings - prevent vertical AND horizontal cutting */
+        h1, h2, h3, h4, h5, h6 {
+          word-wrap: break-word !important;
+          overflow-wrap: break-word !important;
+          max-width: 100% !important;
+          width: 100% !important;
+          padding-left: 1rem !important;
+          padding-right: 1rem !important;
+          box-sizing: border-box !important;
+          line-height: 1.3 !important;
+          margin-left: 0 !important;
+          margin-right: 0 !important;
+          padding-top: 0.75rem !important;
+          padding-bottom: 0.75rem !important;
+          overflow: visible !important;
+        }
+        
+        /* Text elements - force wrapping */
+        p, span, div, a, button, li, td, th, label, strong, em, b, i {
+          word-wrap: break-word !important;
+          overflow-wrap: break-word !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+          width: auto !important;
+        }
+        
+        /* Fix ALL containers - aggressive */
+        .container-narrow,
+        [class*="container"],
+        [class*="Container"],
+        [class*="Container"] > *,
+        section,
+        main,
+        article,
+        header,
+        footer,
+        nav,
+        aside {
+          padding-left: 1rem !important;
+          padding-right: 1rem !important;
+          max-width: 100% !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
+          margin-left: 0 !important;
+          margin-right: 0 !important;
+          overflow-x: hidden !important;
+        }
+        
+        /* Hero section specific fixes - CRITICAL */
+        [class*="hero"],
+        [class*="Hero"],
+        [id*="hero"],
+        [id*="Hero"],
+        [class*="hero"] > *,
+        [class*="Hero"] > * {
+          padding-left: 1rem !important;
+          padding-right: 1rem !important;
+          max-width: 100% !important;
+          width: 100% !important;
+          box-sizing: border-box !important;
+          overflow-x: hidden !important;
+          overflow-y: visible !important;
+        }
+        
+        /* Fix large text sizes - prevent vertical cutting (INCREASED line-height) */
+        .text-5xl, .text-6xl, .text-7xl,
+        h1.text-5xl, h1.text-6xl, h1.text-7xl,
+        h1 {
+          font-size: clamp(1.75rem, 7vw, 2.75rem) !important;
+          line-height: 1.4 !important;
+          padding-top: 1rem !important;
+          padding-bottom: 1rem !important;
+          margin-top: 0.75rem !important;
+          margin-bottom: 0.75rem !important;
+          max-width: 100% !important;
+          width: 100% !important;
+          overflow: visible !important;
+        }
+        
+        .text-4xl,
+        h1.text-4xl, h2.text-4xl,
+        h2 {
+          font-size: clamp(1.5rem, 6vw, 2rem) !important;
+          line-height: 1.35 !important;
+          padding-top: 0.75rem !important;
+          padding-bottom: 0.75rem !important;
+        }
+        
+        .text-3xl,
+        h1.text-3xl, h2.text-3xl, h3.text-3xl,
+        h3 {
+          font-size: clamp(1.25rem, 5vw, 1.75rem) !important;
+          line-height: 1.4 !important;
+        }
+        
+        /* Paragraph text - ensure readable and no cutting */
+        p {
+          line-height: 1.7 !important;
+          padding-left: 0 !important;
+          padding-right: 0 !important;
+          max-width: 100% !important;
+          word-break: break-word !important;
+          overflow-wrap: break-word !important;
+        }
+        
+        /* All text content containers */
+        [class*="text"],
+        [class*="content"],
+        [class*="Content"] {
+          max-width: 100% !important;
+          width: 100% !important;
+          padding-left: 1rem !important;
+          padding-right: 1rem !important;
+          box-sizing: border-box !important;
+        }
+        
+        /* Flex and grid containers - prevent overflow */
+        [class*="flex"],
+        [class*="grid"],
+        [class*="Flex"],
+        [class*="Grid"] {
+          max-width: 100% !important;
+          width: 100% !important;
+          overflow-x: hidden !important;
+          box-sizing: border-box !important;
+        }
+        
+        /* Force all spans and inline elements to wrap */
+        span, strong, em, b, i, a {
+          display: inline !important;
+          word-break: break-word !important;
+          overflow-wrap: break-word !important;
+          max-width: 100% !important;
+        }
+        
+        /* Safe area for iPhone notch */
+        @supports (padding: max(0px)) {
+          body {
+            padding-left: max(0px, env(safe-area-inset-left)) !important;
+            padding-right: max(0px, env(safe-area-inset-right)) !important;
+            padding-top: max(0px, env(safe-area-inset-top)) !important;
+            padding-bottom: max(0px, env(safe-area-inset-bottom)) !important;
+          }
+        }
+      }
+      
+      /* Extra small devices - iPhone SE, small Android */
+      @media (max-width: 480px) {
+        h1, h2, h3, h4, h5, h6 {
+          padding-left: 0.75rem !important;
+          padding-right: 0.75rem !important;
+          font-size: clamp(1.5rem, 8vw, 2.25rem) !important;
+          line-height: 1.5 !important;
+        }
+        
+        .container-narrow,
+        [class*="container"],
+        section, main, article,
+        [class*="hero"],
+        [class*="Hero"] {
+          padding-left: 0.75rem !important;
+          padding-right: 0.75rem !important;
+        }
+        
+        .text-5xl, .text-6xl, .text-7xl,
+        h1 {
+          font-size: clamp(1.5rem, 9vw, 2.25rem) !important;
+          line-height: 1.5 !important;
+          padding-top: 0.75rem !important;
+          padding-bottom: 0.75rem !important;
+        }
+        
+        p {
+          font-size: 0.95rem !important;
+          line-height: 1.75 !important;
+        }
+      }
+      
+      /* Very small devices - iPhone 5/SE */
+      @media (max-width: 375px) {
+        h1, h2, h3, h4, h5, h6 {
+          padding-left: 0.5rem !important;
+          padding-right: 0.5rem !important;
+          font-size: clamp(1.25rem, 9vw, 2rem) !important;
+        }
+        
+        .container-narrow,
+        [class*="container"],
+        section, main, article {
+          padding-left: 0.5rem !important;
+          padding-right: 0.5rem !important;
+        }
+        
+        p {
+          font-size: 0.9rem !important;
+        }
+      }
+      
+      /* Buy Book button mobile styles */
+      @media (max-width: 768px) {
+        #buy-book-btn {
+          margin-left: 0.5rem !important;
+          margin-top: 0.5rem !important;
+          padding: 0.625rem 1.25rem !important;
+          font-size: 0.9rem !important;
+          width: auto !important;
+          max-width: 100% !important;
+        }
       }
     </style>
   </body>
