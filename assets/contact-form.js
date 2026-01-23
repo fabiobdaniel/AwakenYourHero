@@ -930,12 +930,18 @@
         
         // Verify it's a newsletter form by checking button text or form context
         const formButton = form.querySelector('button');
-        const buttonText = (button?.textContent || formButton?.textContent || '').toUpperCase();
-        const isNewsletterForm = buttonText.includes('NEWSLETTER') ||
-                                buttonText.includes('JOIN');
+        const buttonText = (button?.textContent || formButton?.textContent || '').trim();
+        const buttonTextUpper = buttonText.toUpperCase();
+        
+        // Verificar se é newsletter (case-insensitive)
+        const isNewsletterForm = buttonTextUpper.includes('NEWSLETTER') ||
+                                buttonTextUpper.includes('JOIN') ||
+                                buttonText.includes('newsletter') ||
+                                buttonText.includes('Newsletter');
         
         console.log('[Newsletter] 🔍 Is newsletter form?', isNewsletterForm);
         console.log('[Newsletter] 🔍 Button text checked:', buttonText);
+        console.log('[Newsletter] 🔍 Button text (upper):', buttonTextUpper);
         
         if (!isNewsletterForm) {
           console.log('[Newsletter] 🔍 Not a newsletter form, ignoring');
@@ -988,15 +994,44 @@
           console.log('[Newsletter] 📤 Sending newsletter subscription...');
           
           // ✨ Usar EmailServiceModule (módulo modularizado)
-          const EmailServiceModule = await import('/assets/email-client-module.js');
-          console.log('[Newsletter] 🔍 EmailServiceModule loaded:', EmailServiceModule);
-          console.log('[Newsletter] 🔍 emailClient available:', !!EmailServiceModule.emailClient);
-          
-          if (!EmailServiceModule.emailClient) {
-            throw new Error('EmailServiceModule.emailClient is not available. Module exports: ' + Object.keys(EmailServiceModule).join(', '));
+          let emailClient;
+          try {
+            const EmailServiceModule = await import('/assets/email-client-module.js');
+            console.log('[Newsletter] 🔍 EmailServiceModule loaded:', EmailServiceModule);
+            console.log('[Newsletter] 🔍 Module keys:', Object.keys(EmailServiceModule));
+            console.log('[Newsletter] 🔍 Module.default:', EmailServiceModule.default);
+            
+            // Tentar obter emailClient de diferentes formas
+            if (EmailServiceModule.emailClient) {
+              emailClient = EmailServiceModule.emailClient;
+              console.log('[Newsletter] ✅ Found emailClient in EmailServiceModule.emailClient');
+            } else if (EmailServiceModule.default?.emailClient) {
+              emailClient = EmailServiceModule.default.emailClient;
+              console.log('[Newsletter] ✅ Found emailClient in EmailServiceModule.default.emailClient');
+            } else if (EmailServiceModule.EmailClient) {
+              emailClient = new EmailServiceModule.EmailClient();
+              console.log('[Newsletter] ✅ Created new EmailClient instance');
+            } else if (EmailServiceModule.default) {
+              emailClient = new EmailServiceModule.default();
+              console.log('[Newsletter] ✅ Created new instance from default');
+            } else {
+              console.error('[Newsletter] ❌ Available exports:', Object.keys(EmailServiceModule));
+              throw new Error('emailClient not found in module. Available exports: ' + Object.keys(EmailServiceModule).join(', '));
+            }
+            
+            console.log('[Newsletter] 🔍 emailClient available:', !!emailClient);
+            console.log('[Newsletter] 🔍 emailClient methods:', emailClient ? Object.keys(emailClient) : 'N/A');
+          } catch (importError) {
+            console.error('[Newsletter] ❌ Failed to import EmailServiceModule:', importError);
+            console.error('[Newsletter] ❌ Import error stack:', importError.stack);
+            throw new Error('Failed to load email service module: ' + importError.message);
           }
           
-          const response = await EmailServiceModule.emailClient.sendNewsletterSubscription(email);
+          if (!emailClient || typeof emailClient.sendNewsletterSubscription !== 'function') {
+            throw new Error('emailClient.sendNewsletterSubscription is not a function. emailClient type: ' + typeof emailClient);
+          }
+          
+          const response = await emailClient.sendNewsletterSubscription(email);
           
           console.log('[Newsletter] ✅ Newsletter subscription sent successfully!');
           console.log('[Newsletter] ✅ Resend ID:', response.id);
