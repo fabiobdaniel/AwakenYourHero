@@ -1130,4 +1130,614 @@
     addDownloadLogsButton();
   });
   
+  // ========================================
+  // ADD "BUY BOOK" BUTTON NEXT TO "TAKE YOUR NEXT STEP" TITLE
+  // ========================================
+  function addBuyBookButtonNextToTitle() {
+    try {
+      // Check if button already exists
+      const existingBtn = document.getElementById('buy-book-cta-btn');
+      if (existingBtn && document.body.contains(existingBtn)) {
+        return; // Already exists
+      }
+      
+      // Find the title "Take your next step" (case insensitive)
+      const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+      let targetHeading = null;
+      
+      for (const heading of headings) {
+        const text = (heading.textContent || '').trim().toLowerCase();
+        if (text.includes('take your next step') || 
+            text.includes('take your next') ||
+            (text.includes('next step') && text.includes('take'))) {
+          targetHeading = heading;
+          break;
+        }
+      }
+      
+      if (!targetHeading) {
+        console.log('[BuyBook] ⏳ Title "Take your next step" not found yet');
+        return;
+      }
+      
+      console.log('[BuyBook] ✅ Found title:', targetHeading.textContent);
+      
+      // Create Buy Book button
+      const buyBookBtn = document.createElement('a');
+      buyBookBtn.id = 'buy-book-cta-btn';
+      buyBookBtn.href = 'https://a.co/d/5m8frEq';
+      buyBookBtn.target = '_blank';
+      buyBookBtn.rel = 'noopener noreferrer';
+      buyBookBtn.textContent = 'Buy Book';
+      buyBookBtn.setAttribute('aria-label', 'Buy Book');
+      
+      // Apply styles - matching site theme
+      buyBookBtn.style.cssText = `
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.5rem;
+        margin-left: 1.5rem;
+        background-color: hsl(var(--primary));
+        color: hsl(var(--primary-foreground));
+        font-weight: 600;
+        border-radius: var(--radius);
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: var(--shadow-button);
+        white-space: nowrap;
+      `;
+      
+      // No hover effects - button stays in place
+      
+      // Add button to the right side without moving the title
+      const parent = targetHeading.parentElement;
+      if (parent) {
+        // Make parent relative if not already
+        const parentPosition = window.getComputedStyle(parent).position;
+        if (parentPosition === 'static') {
+          parent.style.position = 'relative';
+        }
+        
+        // Position button absolutely to the right, aligned with title
+        buyBookBtn.style.cssText = `
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.75rem 1.5rem;
+          background-color: hsl(var(--primary));
+          color: hsl(var(--primary-foreground));
+          font-weight: 600;
+          border-radius: var(--radius);
+          text-decoration: none;
+          cursor: pointer;
+          transition: none;
+          box-shadow: var(--shadow-button);
+          white-space: nowrap;
+          position: absolute;
+          right: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 10;
+        `;
+        
+        // Mobile responsive: move button below title on small screens
+        const mediaQuery = window.matchMedia('(max-width: 768px)');
+        const updateMobileLayout = () => {
+          if (mediaQuery.matches) {
+            // Mobile: button below title, centered
+            buyBookBtn.style.position = 'relative';
+            buyBookBtn.style.right = 'auto';
+            buyBookBtn.style.top = 'auto';
+            buyBookBtn.style.transform = 'none';
+            buyBookBtn.style.marginTop = '1rem';
+            buyBookBtn.style.marginLeft = 'auto';
+            buyBookBtn.style.marginRight = 'auto';
+            buyBookBtn.style.display = 'flex';
+          } else {
+            // Desktop: button to the right, aligned with title
+            buyBookBtn.style.position = 'absolute';
+            buyBookBtn.style.right = '0';
+            buyBookBtn.style.top = '50%';
+            buyBookBtn.style.transform = 'translateY(-50%)';
+            buyBookBtn.style.marginTop = '0';
+            buyBookBtn.style.marginLeft = 'auto';
+            buyBookBtn.style.marginRight = '0';
+            buyBookBtn.style.display = 'inline-flex';
+            buyBookBtn.style.opacity = '1';
+          }
+        };
+        
+        updateMobileLayout();
+        mediaQuery.addEventListener('change', updateMobileLayout);
+        
+        // Add button to parent (title stays in place)
+        parent.appendChild(buyBookBtn);
+        
+        console.log('[BuyBook] ✅ Buy Book button added to the right, title unchanged');
+      }
+    } catch (error) {
+      console.error('[BuyBook] ❌ Error adding button:', error);
+    }
+  }
+  
+  // Try to add button multiple times (React may render later)
+  const tryAddBuyBookButton = () => {
+    try {
+      addBuyBookButtonNextToTitle();
+    } catch (error) {
+      console.error('[BuyBook] Error in tryAddBuyBookButton:', error);
+    }
+  };
+  
+  // Initial attempts
+  tryAddBuyBookButton();
+  setTimeout(tryAddBuyBookButton, 500);
+  setTimeout(tryAddBuyBookButton, 1000);
+  setTimeout(tryAddBuyBookButton, 2000);
+  setTimeout(tryAddBuyBookButton, 3000);
+  setTimeout(tryAddBuyBookButton, 5000);
+  
+  // Monitor continuously
+  const buyBookCheckInterval = setInterval(() => {
+    const existingBtn = document.getElementById('buy-book-cta-btn');
+    if (!existingBtn || !document.body.contains(existingBtn)) {
+      tryAddBuyBookButton();
+    }
+  }, 2000);
+  
+  // Use MutationObserver to detect when title appears
+  const buyBookObserver = new MutationObserver(() => {
+    const existingBtn = document.getElementById('buy-book-cta-btn');
+    if (!existingBtn || !document.body.contains(existingBtn)) {
+      tryAddBuyBookButton();
+    }
+  });
+  
+  buyBookObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+  
+  // Clean up on page unload
+  window.addEventListener('beforeunload', () => {
+    clearInterval(buyBookCheckInterval);
+    buyBookObserver.disconnect();
+  });
+  
+  // ========================================
+  // ADD "BUY BOOK" BUTTON IN HEADER BETWEEN "CONTACT" AND "TAKE YOUR NEXT STEP"
+  // ========================================
+  function addBuyBookButtonInHeader() {
+    try {
+      // Check if button already exists in header
+      const existingHeaderBtn = document.getElementById('buy-book-header-btn');
+      if (existingHeaderBtn && document.body.contains(existingHeaderBtn)) {
+        return; // Already exists
+      }
+      
+      console.log('[BuyBookHeader] 🔍 Searching for header navigation...');
+      
+      // Find Contact and Take your next step links
+      const allLinks = Array.from(document.querySelectorAll('a, button, [role="link"]'));
+      let contactLink = null;
+      let takeNextStepLink = null;
+      
+      for (const link of allLinks) {
+        const text = (link.textContent || '').trim().toLowerCase();
+        if ((text === 'contact' || text === 'contact') && !contactLink) {
+          contactLink = link;
+          console.log('[BuyBookHeader] ✅ Found Contact link');
+        }
+        if ((text.includes('take your next step') || 
+            text.includes('take your next') ||
+            (text.includes('next step') && text.includes('take'))) && !takeNextStepLink) {
+          takeNextStepLink = link;
+          console.log('[BuyBookHeader] ✅ Found Take your next step link');
+        }
+      }
+      
+      if (!contactLink || !takeNextStepLink) {
+        console.log('[BuyBookHeader] ⏳ Links not found - Contact:', !!contactLink, 'Take next step:', !!takeNextStepLink);
+        return;
+      }
+      
+      // Find common parent container - walk up from both links
+      let contactAncestors = [];
+      let current = contactLink;
+      while (current && current !== document.body) {
+        contactAncestors.push(current);
+        current = current.parentElement;
+      }
+      
+      let navContainer = null;
+      current = takeNextStepLink;
+      while (current && current !== document.body) {
+        if (contactAncestors.includes(current)) {
+          navContainer = current;
+          break;
+        }
+        current = current.parentElement;
+      }
+      
+      // If no common ancestor, try to find nav/header element
+      if (!navContainer) {
+        // Look for nav or header element
+        const navElements = document.querySelectorAll('nav, header, [role="navigation"]');
+        for (const navEl of navElements) {
+          if (navEl.contains(contactLink) && navEl.contains(takeNextStepLink)) {
+            navContainer = navEl;
+            break;
+          }
+        }
+      }
+      
+      // Fallback: use parent of Contact if it's a flex/grid container
+      if (!navContainer) {
+        let parent = contactLink.parentElement;
+        while (parent && parent !== document.body) {
+          const style = window.getComputedStyle(parent);
+          if (style.display === 'flex' || style.display === 'grid' || 
+              parent.tagName === 'NAV' || parent.tagName === 'HEADER') {
+            if (parent.contains(takeNextStepLink)) {
+              navContainer = parent;
+              break;
+            }
+          }
+          parent = parent.parentElement;
+        }
+      }
+      
+      if (!navContainer) {
+        console.log('[BuyBookHeader] ⏳ Navigation container not found');
+        return;
+      }
+      
+      console.log('[BuyBookHeader] ✅ Found navigation container:', navContainer.tagName, navContainer.className);
+      
+      // Create Buy Book button - EXACT same style as contact page button
+      const buyBookHeaderBtn = document.createElement('a');
+      buyBookHeaderBtn.id = 'buy-book-header-btn';
+      buyBookHeaderBtn.href = 'https://a.co/d/5m8frEq';
+      buyBookHeaderBtn.target = '_blank';
+      buyBookHeaderBtn.rel = 'noopener noreferrer';
+      buyBookHeaderBtn.textContent = 'Buy Book';
+      buyBookHeaderBtn.setAttribute('aria-label', 'Buy Book');
+      
+      // Apply styles - EXACT same as contact page button
+      buyBookHeaderBtn.style.cssText = `
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.5rem;
+        background-color: hsl(var(--primary));
+        color: hsl(var(--primary-foreground));
+        font-weight: 600;
+        border-radius: var(--radius);
+        text-decoration: none;
+        cursor: pointer;
+        transition: none;
+        box-shadow: var(--shadow-button);
+        white-space: nowrap;
+        opacity: 1;
+      `;
+      
+      // Find where to insert: between Contact and Take your next step
+      let inserted = false;
+      
+      // Method 1: If Contact and Take next step are direct children of navContainer
+      const navChildren = Array.from(navContainer.children);
+      const contactParent = contactLink.parentElement;
+      const nextStepParent = takeNextStepLink.parentElement;
+      
+      const contactParentIndex = navChildren.indexOf(contactParent);
+      const nextStepParentIndex = navChildren.indexOf(nextStepParent);
+      
+      if (contactParentIndex >= 0 && nextStepParentIndex >= 0 && nextStepParentIndex > contactParentIndex) {
+        // Insert between them
+        navContainer.insertBefore(buyBookHeaderBtn, navChildren[nextStepParentIndex]);
+        inserted = true;
+        console.log('[BuyBookHeader] ✅ Button inserted between Contact and Take next step (method 1)');
+      }
+      
+      // Method 2: If they're siblings in the same parent
+      if (!inserted && contactParent === nextStepParent && contactParent) {
+        const siblings = Array.from(contactParent.children);
+        const contactIndex = siblings.indexOf(contactLink);
+        const nextStepIndex = siblings.indexOf(takeNextStepLink);
+        
+        if (contactIndex >= 0 && nextStepIndex > contactIndex) {
+          contactParent.insertBefore(buyBookHeaderBtn, siblings[nextStepIndex]);
+          inserted = true;
+          console.log('[BuyBookHeader] ✅ Button inserted between Contact and Take next step (method 2)');
+        }
+      }
+      
+      // Method 3: Insert after Contact's parent
+      if (!inserted && contactParent && navContainer.contains(contactParent)) {
+        if (contactParent.nextSibling) {
+          navContainer.insertBefore(buyBookHeaderBtn, contactParent.nextSibling);
+        } else {
+          navContainer.appendChild(buyBookHeaderBtn);
+        }
+        inserted = true;
+        console.log('[BuyBookHeader] ✅ Button inserted after Contact (method 3)');
+      }
+      
+      // Method 4: Fallback - append to navContainer
+      if (!inserted) {
+        navContainer.appendChild(buyBookHeaderBtn);
+        console.log('[BuyBookHeader] ✅ Button appended to navigation container (fallback)');
+      }
+      
+      console.log('[BuyBookHeader] ✅ Buy Book button added to header');
+    } catch (error) {
+      console.error('[BuyBookHeader] ❌ Error adding button to header:', error);
+    }
+  }
+  
+  // Try to add button in header multiple times
+  const tryAddBuyBookHeaderButton = () => {
+    try {
+      addBuyBookButtonInHeader();
+    } catch (error) {
+      console.error('[BuyBookHeader] Error in tryAddBuyBookHeaderButton:', error);
+    }
+  };
+  
+  // Initial attempts
+  tryAddBuyBookHeaderButton();
+  setTimeout(tryAddBuyBookHeaderButton, 500);
+  setTimeout(tryAddBuyBookHeaderButton, 1000);
+  setTimeout(tryAddBuyBookHeaderButton, 2000);
+  setTimeout(tryAddBuyBookHeaderButton, 3000);
+  setTimeout(tryAddBuyBookHeaderButton, 5000);
+  
+  // Monitor continuously
+  const buyBookHeaderCheckInterval = setInterval(() => {
+    const existingHeaderBtn = document.getElementById('buy-book-header-btn');
+    if (!existingHeaderBtn || !document.body.contains(existingHeaderBtn)) {
+      tryAddBuyBookHeaderButton();
+    }
+  }, 2000);
+  
+  // Use MutationObserver to detect when header appears
+  const buyBookHeaderObserver = new MutationObserver(() => {
+    const existingHeaderBtn = document.getElementById('buy-book-header-btn');
+    if (!existingHeaderBtn || !document.body.contains(existingHeaderBtn)) {
+      tryAddBuyBookHeaderButton();
+    }
+  });
+  
+  buyBookHeaderObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+  
+  // Clean up on page unload
+  window.addEventListener('beforeunload', () => {
+    clearInterval(buyBookHeaderCheckInterval);
+    buyBookHeaderObserver.disconnect();
+  });
+  
+  // ========================================
+  // ADD BOOK SECTION TO ABOUT PAGE AFTER "FROM OPERATOR TO ARCHITECT"
+  // ========================================
+  function addBookSectionToAbout() {
+    try {
+      // Check if section already exists
+      const existingBookSection = document.getElementById('disciplined-destiny-section');
+      if (existingBookSection && document.body.contains(existingBookSection)) {
+        return; // Already exists
+      }
+      
+      console.log('[BookSection] 🔍 Searching for "From Operator to Architect" section...');
+      
+      // Find the "From Operator to Architect" section
+      const allHeadings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+      let operatorArchitectHeading = null;
+      
+      for (const heading of allHeadings) {
+        const text = (heading.textContent || '').trim().toLowerCase();
+        if (text.includes('from operator to architect') || 
+            text.includes('operator to architect') ||
+            (text.includes('operator') && text.includes('architect'))) {
+          operatorArchitectHeading = heading;
+          console.log('[BookSection] ✅ Found "From Operator to Architect" section');
+          break;
+        }
+      }
+      
+      if (!operatorArchitectHeading) {
+        console.log('[BookSection] ⏳ "From Operator to Architect" section not found yet');
+        return;
+      }
+      
+      // Find the parent section/container
+      let sectionContainer = operatorArchitectHeading.parentElement;
+      
+      // Walk up to find a section, article, or main container
+      while (sectionContainer && sectionContainer !== document.body) {
+        const tagName = sectionContainer.tagName?.toLowerCase();
+        if (tagName === 'section' || tagName === 'article' || tagName === 'main' ||
+            sectionContainer.classList?.toString().toLowerCase().includes('section') ||
+            sectionContainer.classList?.toString().toLowerCase().includes('container')) {
+          break;
+        }
+        sectionContainer = sectionContainer.parentElement;
+      }
+      
+      if (!sectionContainer) {
+        sectionContainer = operatorArchitectHeading.parentElement;
+      }
+      
+      console.log('[BookSection] ✅ Found container:', sectionContainer.tagName);
+      
+      // Create book section
+      const bookSection = document.createElement('section');
+      bookSection.id = 'disciplined-destiny-section';
+      bookSection.className = 'book-section';
+      
+      // Apply styles to match site design
+      bookSection.style.cssText = `
+        margin-top: 4rem;
+        margin-bottom: 4rem;
+        padding: 2rem 0;
+      `;
+      
+      // Create title
+      const title = document.createElement('h2');
+      title.textContent = 'Disciplined Destiny';
+      title.style.cssText = `
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        text-align: center;
+      `;
+      
+      // Create container for image and description
+      const contentContainer = document.createElement('div');
+      contentContainer.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      `;
+      
+      // Create image container
+      const imageContainer = document.createElement('div');
+      imageContainer.style.cssText = `
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+      `;
+      
+      const bookImage = document.createElement('img');
+      bookImage.src = '/assets/disciplined-destiny-book.jpg'; // Placeholder - user needs to add image
+      bookImage.alt = 'Disciplined Destiny Book Cover';
+      bookImage.style.cssText = `
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        object-fit: contain;
+      `;
+      
+      // Handle image load error - use placeholder
+      bookImage.onerror = function() {
+        console.log('[BookSection] ⚠️ Book image not found, using placeholder');
+        this.style.display = 'none';
+        imageContainer.innerHTML = '<p style="text-align: center; color: #666;">Book cover image will be displayed here</p>';
+      };
+      
+      imageContainer.appendChild(bookImage);
+      
+      // Create description
+      const description = document.createElement('div');
+      description.style.cssText = `
+        width: 100%;
+        max-width: 800px;
+        line-height: 1.8;
+        font-size: 1.1rem;
+        color: inherit;
+      `;
+      
+      const descriptionText = document.createElement('p');
+      descriptionText.innerHTML = `
+        <strong>From Discipline to Destiny</strong> is a clear call to action for anyone who knows they were meant for more but hasn't yet built the path to get there.<br><br>
+        
+        Through powerful, real-life stories, <a href="https://www.LesBrown.com" target="_blank" rel="noopener noreferrer">Les Brown</a> and a diverse group of leaders show that destiny isn't found by chance. It's built through daily discipline, focused thinking, and intentional action.<br><br>
+        
+        More than inspiration, this book offers a practical blueprint for taking ownership of your mindset, habits, and choices. It's for readers ready to stop waiting, stop holding back, and start living with purpose.<br><br>
+        
+        <strong>Discipline is the bridge. Destiny is the destination. The journey begins now.</strong>
+      `;
+      
+      description.appendChild(descriptionText);
+      
+      // Assemble section
+      contentContainer.appendChild(imageContainer);
+      contentContainer.appendChild(description);
+      
+      bookSection.appendChild(title);
+      bookSection.appendChild(contentContainer);
+      
+      // Insert after "From Operator to Architect" section
+      // Find the end of that section
+      let insertAfter = operatorArchitectHeading;
+      let current = operatorArchitectHeading;
+      
+      // Find the next heading or end of section
+      while (current && current !== sectionContainer) {
+        const nextSibling = current.nextElementSibling;
+        if (nextSibling) {
+          const nextTag = nextSibling.tagName?.toLowerCase();
+          if (nextTag && nextTag.match(/^h[1-6]$/)) {
+            // Found next heading, insert before it
+            sectionContainer.insertBefore(bookSection, nextSibling);
+            console.log('[BookSection] ✅ Book section inserted before next heading');
+            return;
+          }
+        }
+        current = current.parentElement;
+      }
+      
+      // If no next heading found, append to section container
+      sectionContainer.appendChild(bookSection);
+      console.log('[BookSection] ✅ Book section added to About page');
+      
+    } catch (error) {
+      console.error('[BookSection] ❌ Error adding book section:', error);
+      console.error('[BookSection] Error stack:', error.stack);
+    }
+  }
+  
+  // Try to add book section multiple times
+  const tryAddBookSection = () => {
+    try {
+      addBookSectionToAbout();
+    } catch (error) {
+      console.error('[BookSection] Error in tryAddBookSection:', error);
+    }
+  };
+  
+  // Initial attempts
+  tryAddBookSection();
+  setTimeout(tryAddBookSection, 500);
+  setTimeout(tryAddBookSection, 1000);
+  setTimeout(tryAddBookSection, 2000);
+  setTimeout(tryAddBookSection, 3000);
+  setTimeout(tryAddBookSection, 5000);
+  
+  // Monitor continuously
+  const bookSectionCheckInterval = setInterval(() => {
+    const existingSection = document.getElementById('disciplined-destiny-section');
+    if (!existingSection || !document.body.contains(existingSection)) {
+      tryAddBookSection();
+    }
+  }, 2000);
+  
+  // Use MutationObserver to detect when About page loads
+  const bookSectionObserver = new MutationObserver(() => {
+    const existingSection = document.getElementById('disciplined-destiny-section');
+    if (!existingSection || !document.body.contains(existingSection)) {
+      tryAddBookSection();
+    }
+  });
+  
+  bookSectionObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+  
+  // Clean up on page unload
+  window.addEventListener('beforeunload', () => {
+    clearInterval(bookSectionCheckInterval);
+    bookSectionObserver.disconnect();
+  });
+  
 })();
