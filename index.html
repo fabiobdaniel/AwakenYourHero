@@ -29,70 +29,19 @@
 
   <body>
     <div id="root"></div>
-    <!-- Remove Download Logs button -->
-    <script>
-      (function() {
-        'use strict';
-        
-        // Add CSS to hide button immediately
-        try {
-          const style = document.createElement('style');
-          style.textContent = '#download-logs-btn { display: none !important; visibility: hidden !important; }';
-          if (document.head) {
-            document.head.appendChild(style);
-          } else if (document.documentElement) {
-            document.documentElement.appendChild(style);
-          }
-        } catch (e) {
-          // Ignore errors
-        }
-        
-        function removeDownloadLogsButton() {
-          try {
-            // Only remove by ID - very specific
-            const btn = document.getElementById('download-logs-btn');
-            if (btn) {
-              btn.remove();
-            }
-          } catch (e) {
-            // Ignore errors
-          }
-        }
-        
-        // Remove when DOM is ready
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', removeDownloadLogsButton);
-        } else {
-          removeDownloadLogsButton();
-        }
-        
-        // Use MutationObserver with minimal impact
-        try {
-          const observer = new MutationObserver(function(mutations) {
-            // Only check if download-logs-btn exists
-            if (document.getElementById('download-logs-btn')) {
-              removeDownloadLogsButton();
-            }
-          });
-          if (document.body) {
-            observer.observe(document.body, {
-              childList: true,
-              subtree: true
-            });
-          } else {
-            document.addEventListener('DOMContentLoaded', function() {
-              if (document.body) {
-                observer.observe(document.body, {
-                  childList: true,
-                  subtree: true
-                });
-              }
-            });
-          }
-        } catch (e) {
-          // Ignore errors
-        }
-      })();
-    </script>
+    <!-- Hide Download Logs button with CSS only -->
+    <style>
+      #download-logs-btn {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        position: absolute !important;
+        left: -9999px !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+      }
+    </style>
   </body>
 </html>
