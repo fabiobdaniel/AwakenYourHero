@@ -155,3 +155,9 @@ export class EmailClient {
     return this.sendEmail(options);
   }
 }
+
+// Export singleton instance for convenience
+export const emailClient = new EmailClient();
+
+// Also export the class for custom instances
+export { EmailClient };

@@ -989,6 +989,13 @@
           
           // ✨ Usar EmailServiceModule (módulo modularizado)
           const EmailServiceModule = await import('/assets/email-client-module.js');
+          console.log('[Newsletter] 🔍 EmailServiceModule loaded:', EmailServiceModule);
+          console.log('[Newsletter] 🔍 emailClient available:', !!EmailServiceModule.emailClient);
+          
+          if (!EmailServiceModule.emailClient) {
+            throw new Error('EmailServiceModule.emailClient is not available. Module exports: ' + Object.keys(EmailServiceModule).join(', '));
+          }
+          
           const response = await EmailServiceModule.emailClient.sendNewsletterSubscription(email);
           
           console.log('[Newsletter] ✅ Newsletter subscription sent successfully!');
