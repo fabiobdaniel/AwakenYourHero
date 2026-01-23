@@ -582,13 +582,47 @@
   // Use event delegation on document with capture:true to intercept BEFORE React
   if (!window.__contactFormListenerAdded) {
     console.log('[ContactForm] 🔧 Adding document-level submit listener (capture phase)');
-    document.addEventListener('submit', async function(e) {
+    
+    // Also add click listener on submit buttons as fallback
+    const handleFormSubmit = async function(e) {
       // Find the form (it might have been re-rendered by React)
-      const form = e.target.closest('form') || document.querySelector('form');
+      let form = null;
+      
+      if (e.type === 'submit') {
+        form = e.target.closest('form') || document.querySelector('form');
+      } else if (e.type === 'click') {
+        // For click events, only process if clicking a submit button
+        const button = e.target.closest('button[type="submit"]') || 
+                      (e.target.tagName === 'BUTTON' && e.target.type === 'submit' ? e.target : null) ||
+                      (e.target.closest('button') && e.target.closest('form') ? e.target.closest('button') : null);
+        
+        if (!button) {
+          return; // Not a submit button, ignore
+        }
+        
+        // Check if button text suggests it's a submit button
+        const buttonText = (button.textContent || '').toLowerCase().trim();
+        if (!buttonText.includes('send') && !buttonText.includes('submit') && !buttonText.includes('enviar')) {
+          return; // Doesn't look like a submit button
+        }
+        
+        form = button.closest('form') || document.querySelector('form');
+      } else {
+        return; // Unknown event type
+      }
       
       // Only process if this is our contact form
       if (!form) {
         console.log('[ContactForm] 🔍 Submit event detected but no form found');
+        return;
+      }
+      
+      // Check if this is the contact form (has the message field or interest field)
+      const hasMessageField = form.querySelector('textarea[name="message"], textarea[name="msg"], textarea[name="comments"]');
+      const hasInterestField = form.querySelector('select[name="interest"], select[name="interested"], select[name="service"]');
+      
+      if (!hasMessageField && !hasInterestField) {
+        console.log('[ContactForm] 🔍 Form found but not the contact form, ignoring');
         return;
       }
       
@@ -598,11 +632,13 @@
       console.log('[ContactForm] 🔍 Form found:', {
         formId: form.id,
         formAction: form.action,
-        formMethod: form.method
+        formMethod: form.method,
+        eventType: e.type
       });
       
       e.preventDefault();
       e.stopImmediatePropagation();
+      e.stopPropagation();
       
       // Use the form we found
       const contactForm = form;
@@ -789,7 +825,11 @@
           console.log('[ContactForm] 🏁 PROCESS COMPLETE');
           console.log('[ContactForm] ========================================');
         }
-    }, true); // capture: true to intercept before React
+    };
+    
+    // Add both submit and click listeners
+    document.addEventListener('submit', handleFormSubmit, true);
+    document.addEventListener('click', handleFormSubmit, true);
     
     window.__contactFormListenerAdded = true;
   }
