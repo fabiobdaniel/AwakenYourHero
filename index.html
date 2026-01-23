@@ -27,115 +27,41 @@
 
   <body>
     <div id="root"></div>
-    <!-- Intercept and remove Download Logs button BEFORE it's added to DOM -->
+    <!-- Remove Download Logs button -->
     <script>
       (function() {
         'use strict';
         
-        // Intercept appendChild to catch button before it's added
-        const originalAppendChild = Node.prototype.appendChild;
-        Node.prototype.appendChild = function(child) {
-          if (child && (child.nodeType === 1)) { // Element node
-            const text = child.textContent || child.innerText || '';
-            const id = child.id || '';
-            
-            // Check if this is the download logs button
-            if (id === 'download-logs-btn' || 
-                text.includes('Download Logs') || 
-                text.includes('📥') ||
-                (child.tagName === 'BUTTON' && text.includes('Download'))) {
-              console.log('🚫 Intercepted download logs button creation, preventing addition to DOM');
-              return child; // Return without adding to DOM
-            }
-          }
-          return originalAppendChild.call(this, child);
-        };
-        
-        // Intercept insertBefore too
-        const originalInsertBefore = Node.prototype.insertBefore;
-        Node.prototype.insertBefore = function(newNode, referenceNode) {
-          if (newNode && (newNode.nodeType === 1)) {
-            const text = newNode.textContent || newNode.innerText || '';
-            const id = newNode.id || '';
-            
-            if (id === 'download-logs-btn' || 
-                text.includes('Download Logs') || 
-                text.includes('📥') ||
-                (newNode.tagName === 'BUTTON' && text.includes('Download'))) {
-              console.log('🚫 Intercepted download logs button insertion, preventing addition to DOM');
-              return newNode; // Return without adding to DOM
-            }
-          }
-          return originalInsertBefore.call(this, newNode, referenceNode);
-        };
-        
         function removeDownloadLogsButton() {
-          // Remove by ID
-          const btn = document.getElementById('download-logs-btn');
-          if (btn) {
-            btn.remove();
-            console.log('🗑️ Removed download logs button (by ID)');
-          }
-          
-          // Remove by text content
-          const allButtons = document.querySelectorAll('button, a');
-          allButtons.forEach(el => {
-            const text = el.textContent || el.innerText || '';
-            if (text.includes('Download Logs') || text.includes('📥')) {
-              el.remove();
-              console.log('🗑️ Removed download logs button (by text):', text);
+          try {
+            // Remove by ID
+            const btn = document.getElementById('download-logs-btn');
+            if (btn) {
+              btn.remove();
             }
-          });
-          
-          // Remove fixed buttons in bottom right
-          const allElements = document.querySelectorAll('*');
-          allElements.forEach(el => {
-            if (el.tagName === 'BUTTON' || el.tagName === 'A') {
-              const style = window.getComputedStyle(el);
-              const rect = el.getBoundingClientRect();
-              const isFixed = style.position === 'fixed';
-              const isBottomRight = rect.bottom > window.innerHeight - 100 && rect.right > window.innerWidth - 200;
+            
+            // Remove by text content
+            const allButtons = document.querySelectorAll('button, a');
+            allButtons.forEach(el => {
               const text = el.textContent || el.innerText || '';
-              
-              if (isFixed && isBottomRight && (text.includes('Download') || text.includes('📥') || text.includes('Log'))) {
+              if (text.includes('Download Logs') || text.includes('📥')) {
                 el.remove();
-                console.log('🗑️ Removed button by position:', text);
               }
-            }
-          });
+            });
+          } catch (e) {
+            // Ignore errors
+          }
         }
         
         // Add CSS to hide button
-        const style = document.createElement('style');
-        style.textContent = `
-          #download-logs-btn,
-          [data-contact-form-btn="true"],
-          button[title*="Download"],
-          button[title*="download"],
-          button[title*="log"] {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            position: absolute !important;
-            left: -9999px !important;
-            width: 0 !important;
-            height: 0 !important;
-            overflow: hidden !important;
-            z-index: -9999 !important;
-          }
-        `;
-        if (document.head) {
-          document.head.appendChild(style);
-        } else {
-          document.addEventListener('DOMContentLoaded', () => {
+        try {
+          const style = document.createElement('style');
+          style.textContent = '#download-logs-btn, [data-contact-form-btn="true"] { display: none !important; }';
+          if (document.head) {
             document.head.appendChild(style);
-          });
-        }
-        
-        // Remove immediately
-        if (document.body) {
-          removeDownloadLogsButton();
+          }
+        } catch (e) {
+          // Ignore errors
         }
         
         // Remove when DOM is ready
@@ -145,25 +71,20 @@
           removeDownloadLogsButton();
         }
         
-        // Remove continuously (very aggressive)
-        setInterval(removeDownloadLogsButton, 50);
+        // Remove periodically
+        setInterval(removeDownloadLogsButton, 1000);
         
-        // Use MutationObserver (very aggressive)
-        const observer = new MutationObserver(removeDownloadLogsButton);
-        if (document.body) {
-          observer.observe(document.body, {
-            childList: true,
-            subtree: true,
-            attributes: true
-          });
-        } else {
-          document.addEventListener('DOMContentLoaded', () => {
+        // Use MutationObserver
+        try {
+          const observer = new MutationObserver(removeDownloadLogsButton);
+          if (document.body) {
             observer.observe(document.body, {
               childList: true,
-              subtree: true,
-              attributes: true
+              subtree: true
             });
-          });
+          }
+        } catch (e) {
+          // Ignore errors
         }
       })();
     </script>
