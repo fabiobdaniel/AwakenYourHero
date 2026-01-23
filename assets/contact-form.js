@@ -1617,7 +1617,7 @@
       `;
       
       const bookImage = document.createElement('img');
-      bookImage.src = '/assets/disciplined-destiny-book.jpg'; // Placeholder - user needs to add image
+      bookImage.src = '/assets/Discipline-to-destiny-book-image.png';
       bookImage.alt = 'Disciplined Destiny Book Cover';
       bookImage.style.cssText = `
         width: 100%;
