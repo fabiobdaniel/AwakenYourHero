@@ -84,4 +84,33 @@ export class ButtonManager extends IButtonManager {
       return false;
     }
   }
+
+  /**
+   * Adds a button above a target element
+   * @param {HTMLElement} targetElement - Element to place button above
+   * @param {HTMLElement} newButton - Button to add
+   * @returns {boolean} - Success status
+   */
+  addButtonAbove(targetElement, newButton) {
+    try {
+      if (!targetElement || !newButton) {
+        console.error('[ButtonManager] Target element or new button is null');
+        return false;
+      }
+
+      const parent = targetElement.parentElement;
+      if (!parent) {
+        console.error('[ButtonManager] Target element has no parent');
+        return false;
+      }
+
+      // Insert button before target element
+      parent.insertBefore(newButton, targetElement);
+      console.log('[ButtonManager] ✅ Button added above target element');
+      return true;
+    } catch (error) {
+      console.error('[ButtonManager] ❌ Error adding button above:', error);
+      return false;
+    }
+  }
 }

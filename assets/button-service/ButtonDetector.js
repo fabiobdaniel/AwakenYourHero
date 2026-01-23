@@ -61,4 +61,77 @@ export class ButtonDetector extends IButtonDetector {
     if (!button) return false;
     return document.body.contains(button);
   }
+
+  /**
+   * Finds an image element in the DOM
+   * @param {Object} criteria - { selector: string, alt: string, src: string, class: string }
+   * @returns {HTMLElement|null}
+   */
+  findImage(criteria) {
+    try {
+      console.log('[ButtonDetector] 🖼️ Searching for image with criteria:', criteria);
+      
+      // Try by selector first
+      if (criteria.selector) {
+        const bySelector = document.querySelector(criteria.selector);
+        if (bySelector && bySelector.tagName === 'IMG') {
+          console.log('[ButtonDetector] ✅ Found image by selector');
+          return bySelector;
+        }
+      }
+
+      // Try by class
+      if (criteria.class) {
+        const byClass = document.querySelector(`img.${criteria.class}`);
+        if (byClass) {
+          console.log('[ButtonDetector] ✅ Found image by class');
+          return byClass;
+        }
+      }
+
+      // Try by alt text
+      if (criteria.alt) {
+        const images = Array.from(document.querySelectorAll('img'));
+        const searchAlt = criteria.alt.toLowerCase();
+        for (const img of images) {
+          const imgAlt = (img.alt || '').toLowerCase();
+          if (imgAlt.includes(searchAlt)) {
+            console.log('[ButtonDetector] ✅ Found image by alt text');
+            return img;
+          }
+        }
+      }
+
+      // Try to find main hero image (largest visible image)
+      const images = Array.from(document.querySelectorAll('img'));
+      console.log('[ButtonDetector] 🔍 Found', images.length, 'images on page');
+      
+      // Filter visible images
+      const visibleImages = images.filter(img => {
+        const rect = img.getBoundingClientRect();
+        return rect.width > 100 && rect.height > 100 && 
+               window.getComputedStyle(img).display !== 'none';
+      });
+
+      console.log('[ButtonDetector] 🔍 Found', visibleImages.length, 'visible images');
+
+      if (visibleImages.length > 0) {
+        // Find the largest image (likely the hero image)
+        const largestImage = visibleImages.reduce((largest, current) => {
+          const largestArea = largest.getBoundingClientRect().width * largest.getBoundingClientRect().height;
+          const currentArea = current.getBoundingClientRect().width * current.getBoundingClientRect().height;
+          return currentArea > largestArea ? current : largest;
+        });
+
+        console.log('[ButtonDetector] ✅ Found largest image (likely hero image)');
+        return largestImage;
+      }
+
+      console.log('[ButtonDetector] ❌ No suitable image found');
+      return null;
+    } catch (error) {
+      console.error('[ButtonDetector] Error finding image:', error);
+      return null;
+    }
+  }
 }
