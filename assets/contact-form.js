@@ -186,10 +186,22 @@
 
   // Add download logs button
   function addDownloadLogsButton() {
+    console.log('[ContactForm] 📋 Attempting to add download logs button...');
+    console.log('[ContactForm] 📋 Body exists:', !!document.body);
+    console.log('[ContactForm] 📋 Button already exists:', !!document.getElementById('download-logs-btn'));
+    
     // Check if button already exists
-    if (document.getElementById('download-logs-btn')) {
+    const existingBtn = document.getElementById('download-logs-btn');
+    if (existingBtn) {
       console.log('[ContactForm] 📋 Download logs button already exists');
-      return;
+      // Verify it's actually in the DOM
+      if (document.body.contains(existingBtn)) {
+        console.log('[ContactForm] 📋 Button is in DOM, all good');
+        return;
+      } else {
+        console.log('[ContactForm] 📋 Button exists but not in DOM, removing and re-adding...');
+        existingBtn.remove();
+      }
     }
 
     // Check if body exists
@@ -203,6 +215,7 @@
       btn.id = 'download-logs-btn';
       btn.innerHTML = '📥 Download Logs';
       btn.title = 'Download contact form logs as .log file';
+      btn.setAttribute('data-contact-form-btn', 'true'); // Mark for easy finding
       btn.style.cssText = `
         position: fixed !important;
         bottom: 20px !important;
@@ -220,10 +233,18 @@
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
+        pointer-events: auto !important;
       `;
       
-      btn.addEventListener('click', () => {
-        window.downloadContactFormLogs();
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[ContactForm] 📋 Download logs button clicked');
+        if (window.downloadContactFormLogs) {
+          window.downloadContactFormLogs();
+        } else {
+          console.error('[ContactForm] 📋 downloadContactFormLogs function not found!');
+        }
       });
 
       btn.addEventListener('mouseenter', () => {
@@ -234,11 +255,25 @@
         btn.style.background = '#007bff';
       });
 
+      // Try to append to body
       document.body.appendChild(btn);
-      console.log('[ContactForm] 📋 Download logs button added to page successfully');
-      console.log('[ContactForm] 📋 Button position:', btn.getBoundingClientRect());
+      
+      // Verify it was added
+      const addedBtn = document.getElementById('download-logs-btn');
+      if (addedBtn && document.body.contains(addedBtn)) {
+        console.log('[ContactForm] 📋 Download logs button added to page successfully');
+        console.log('[ContactForm] 📋 Button position:', btn.getBoundingClientRect());
+        console.log('[ContactForm] 📋 Button computed style display:', window.getComputedStyle(btn).display);
+        console.log('[ContactForm] 📋 Button computed style visibility:', window.getComputedStyle(btn).visibility);
+        console.log('[ContactForm] 📋 Button computed style opacity:', window.getComputedStyle(btn).opacity);
+      } else {
+        console.error('[ContactForm] 📋 Button was not added successfully!');
+        console.error('[ContactForm] 📋 Button in DOM:', !!addedBtn);
+        console.error('[ContactForm] 📋 Button in body:', addedBtn ? document.body.contains(addedBtn) : false);
+      }
     } catch (error) {
       console.error('[ContactForm] 📋 Error adding download logs button:', error);
+      console.error('[ContactForm] 📋 Error stack:', error.stack);
     }
   }
 
@@ -268,6 +303,36 @@
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', tryAddButton);
     }
+    
+    // Monitor button continuously (React may remove it)
+    const monitorButton = () => {
+      const existingBtn = document.getElementById('download-logs-btn');
+      if (!existingBtn && document.body) {
+        console.log('[ContactForm] 📋 Button was removed, re-adding...');
+        addDownloadLogsButton();
+      }
+    };
+    
+    // Check periodically
+    const buttonCheckInterval = setInterval(() => {
+      monitorButton();
+    }, 2000);
+    
+    // Also use MutationObserver to detect button removal
+    const buttonObserver = new MutationObserver(() => {
+      monitorButton();
+    });
+    
+    // Observe body for changes
+    if (document.body) {
+      buttonObserver.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+    }
+    
+    // Keep monitoring (don't stop after 2 minutes like phone input)
+    // The button should always be available
 
     // Continuous monitoring to ensure country selector stays
     const monitorPhoneInput = () => {
@@ -511,24 +576,36 @@
     }, 500);
   }
   
-  function enhanceFormSubmission(contactForm) {
-    console.log('[ContactForm] 🔧 EXECUTING: enhanceFormSubmission()');
-    console.log('[ContactForm] 🔧 Parameters:', { 
-      contactForm: contactForm ? 'found' : 'not found',
-      formId: contactForm?.id,
-      formAction: contactForm?.action,
-      formMethod: contactForm?.method
-    });
-    
-    if (contactForm) {
-      console.log('[ContactForm] 🔧 Adding submit event listener to form');
-      contactForm.addEventListener('submit', async function(e) {
-        console.log('[ContactForm] ========================================');
-        console.log('[ContactForm] 🖱️  SUBMIT BUTTON CLICKED');
-        console.log('[ContactForm] ========================================');
-        
-        e.preventDefault();
-        e.stopImmediatePropagation();
+  // Store reference to the form for event delegation
+  let formReference = null;
+  
+  // Use event delegation on document with capture:true to intercept BEFORE React
+  if (!window.__contactFormListenerAdded) {
+    console.log('[ContactForm] 🔧 Adding document-level submit listener (capture phase)');
+    document.addEventListener('submit', async function(e) {
+      // Find the form (it might have been re-rendered by React)
+      const form = e.target.closest('form') || document.querySelector('form');
+      
+      // Only process if this is our contact form
+      if (!form) {
+        console.log('[ContactForm] 🔍 Submit event detected but no form found');
+        return;
+      }
+      
+      console.log('[ContactForm] ========================================');
+      console.log('[ContactForm] 🖱️  SUBMIT BUTTON CLICKED (captured at document level)');
+      console.log('[ContactForm] ========================================');
+      console.log('[ContactForm] 🔍 Form found:', {
+        formId: form.id,
+        formAction: form.action,
+        formMethod: form.method
+      });
+      
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      
+      // Use the form we found
+      const contactForm = form;
 
         console.log('[ContactForm] 📝 Step 1: Collecting form data...');
         const formData = new FormData(contactForm);
@@ -632,14 +709,17 @@
           
           console.log('[ContactForm] 📥 Step 8: Parsing response...');
           let json;
+          // Read response as text first, then try to parse as JSON
+          const responseText = await res.text();
+          console.log('[ContactForm] 📥 Response text:', responseText);
+          
           try {
-            json = await res.json();
+            json = responseText ? JSON.parse(responseText) : {};
             console.log('[ContactForm] 📥 Response parsed successfully:', json);
           } catch (parseErr) {
             console.error('[ContactForm] ❌ Failed to parse JSON response:', parseErr);
-            const text = await res.text();
-            console.error('[ContactForm] ❌ Response text:', text);
-            throw new Error(`Server error (${res.status}): ${text || res.statusText}`);
+            console.error('[ContactForm] ❌ Response text was:', responseText);
+            throw new Error(`Server error (${res.status}): ${responseText || res.statusText}`);
           }
           
           console.log('[ContactForm] ✅ Step 9: Validating response...');
@@ -709,7 +789,24 @@
           console.log('[ContactForm] 🏁 PROCESS COMPLETE');
           console.log('[ContactForm] ========================================');
         }
-      }, true);
+    }, true); // capture: true to intercept before React
+    
+    window.__contactFormListenerAdded = true;
+  }
+  
+  function enhanceFormSubmission(contactForm) {
+    console.log('[ContactForm] 🔧 EXECUTING: enhanceFormSubmission()');
+    console.log('[ContactForm] 🔧 Parameters:', { 
+      contactForm: contactForm ? 'found' : 'not found',
+      formId: contactForm?.id,
+      formAction: contactForm?.action,
+      formMethod: contactForm?.method
+    });
+    
+    // Store reference for event delegation
+    if (contactForm) {
+      formReference = contactForm;
+      console.log('[ContactForm] ✅ Form reference stored for event delegation');
     }
   }
   
@@ -719,4 +816,28 @@
   } else {
     init();
   }
+  
+  // Also try to add button immediately (in case init hasn't run yet)
+  const immediateButtonAttempt = () => {
+    if (document.body) {
+      console.log('[ContactForm] 📋 Immediate button attempt (before init)');
+      addDownloadLogsButton();
+    }
+  };
+  
+  // Try immediately
+  if (document.body) {
+    immediateButtonAttempt();
+  }
+  
+  // Try after a short delay
+  setTimeout(immediateButtonAttempt, 100);
+  setTimeout(immediateButtonAttempt, 500);
+  setTimeout(immediateButtonAttempt, 1000);
+  
+  // Also try when window loads
+  window.addEventListener('load', () => {
+    console.log('[ContactForm] 📋 Window loaded, attempting to add button');
+    addDownloadLogsButton();
+  });
 })();
