@@ -49,29 +49,46 @@ export class BuyBookButtonService {
    */
   tryAddButton() {
     try {
+      console.log('[BuyBookButtonService] 🔍 Attempting to add button...');
+      
       // Check if button already exists
       const buttonId = this.buttonCreator.getConfig().id;
+      console.log('[BuyBookButtonService] 🔍 Checking if button already exists (ID:', buttonId, ')');
+      
       if (this.manager.buttonAlreadyExists(buttonId)) {
+        console.log('[BuyBookButtonService] ℹ️ Button already exists, skipping');
         return; // Already exists
       }
 
       // Find target button
+      console.log('[BuyBookButtonService] 🔍 Searching for target button with criteria:', this.targetButtonCriteria);
       const targetButton = this.detector.findButton(this.targetButtonCriteria);
+      
       if (!targetButton) {
+        console.log('[BuyBookButtonService] ⏳ Target button not found yet');
         return; // Target button not found yet
       }
 
+      console.log('[BuyBookButtonService] ✅ Target button found!', targetButton);
+      console.log('[BuyBookButtonService] 📝 Target button text:', targetButton.textContent);
+
       // Create new button
+      console.log('[BuyBookButtonService] 🔧 Creating Buy Book button...');
       const buyBookButton = this.buttonCreator.createButton();
+      console.log('[BuyBookButtonService] ✅ Buy Book button created');
 
       // Add button next to target
+      console.log('[BuyBookButtonService] 📍 Adding button next to target...');
       const success = this.manager.addButtonNextTo(targetButton, buyBookButton);
       
       if (success) {
         console.log('[BuyBookButtonService] ✅ Buy Book button added successfully');
+      } else {
+        console.error('[BuyBookButtonService] ❌ Failed to add button');
       }
     } catch (error) {
       console.error('[BuyBookButtonService] ❌ Error in tryAddButton:', error);
+      console.error('[BuyBookButtonService] ❌ Error stack:', error.stack);
     }
   }
 
@@ -105,7 +122,9 @@ export class BuyBookButtonService {
    */
   monitorButton() {
     const buttonId = this.buttonCreator.getConfig().id;
-    if (!this.manager.buttonAlreadyExists(buttonId)) {
+    const exists = this.manager.buttonAlreadyExists(buttonId);
+    if (!exists) {
+      console.log('[BuyBookButtonService] 🔄 Button missing, attempting to re-add...');
       this.tryAddButton();
     }
   }

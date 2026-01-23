@@ -27,15 +27,22 @@ export class ButtonDetector extends IButtonDetector {
 
       // Try by text content
       if (criteria.text) {
-        const buttons = Array.from(document.querySelectorAll('button, a[role="button"], a.button'));
+        const buttons = Array.from(document.querySelectorAll('button, a[role="button"], a.button, a[class*="button"]'));
         const searchText = criteria.text.toLowerCase();
+        
+        console.log('[ButtonDetector] 🔍 Searching', buttons.length, 'buttons for text:', searchText);
         
         for (const btn of buttons) {
           const btnText = (btn.textContent || '').trim().toLowerCase();
+          console.log('[ButtonDetector] 🔍 Checking button text:', btnText.substring(0, 50));
+          
           if (btnText.includes(searchText)) {
+            console.log('[ButtonDetector] ✅ Found matching button!');
             return btn;
           }
         }
+        
+        console.log('[ButtonDetector] ❌ No matching button found');
       }
 
       return null;

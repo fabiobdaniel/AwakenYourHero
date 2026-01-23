@@ -1134,21 +1134,66 @@
   // INITIALIZE "BUY BOOK" BUTTON SERVICE (SOLID)
   // ========================================
   async function initBuyBookButtonService() {
+    console.log('[BuyBook] 🚀 Starting Buy Book Button Service initialization...');
     try {
+      console.log('[BuyBook] 📦 Attempting to import button service module...');
       const { BuyBookButtonService } = await import('/assets/button-service/index.js');
+      console.log('[BuyBook] ✅ Module imported successfully');
+      
+      console.log('[BuyBook] 🔧 Creating BuyBookButtonService instance...');
       const buyBookService = new BuyBookButtonService();
+      console.log('[BuyBook] ✅ Service instance created');
+      
+      console.log('[BuyBook] 🎯 Initializing service...');
       buyBookService.init();
-      console.log('[ContactForm] ✅ Buy Book Button Service initialized (SOLID)');
+      console.log('[BuyBook] ✅ Buy Book Button Service initialized (SOLID)');
+      
+      return buyBookService;
     } catch (error) {
-      console.error('[ContactForm] ❌ Error initializing Buy Book Button Service:', error);
+      console.error('[BuyBook] ❌ Error initializing Buy Book Button Service:', error);
+      console.error('[BuyBook] ❌ Error stack:', error.stack);
+      console.error('[BuyBook] ❌ Error message:', error.message);
       // Retry after a delay
       setTimeout(() => {
+        console.log('[BuyBook] 🔄 Retrying initialization...');
         initBuyBookButtonService();
       }, 2000);
+      return null;
     }
   }
   
-  // Initialize Buy Book button service
+  // Initialize Buy Book button service - multiple attempts
+  console.log('[BuyBook] 🔧 Setting up Buy Book Button Service...');
   initBuyBookButtonService();
+  
+  // Also try when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('[BuyBook] 🔧 DOMContentLoaded - initializing service...');
+      initBuyBookButtonService();
+    });
+  }
+  
+  // Also try when window loads
+  window.addEventListener('load', () => {
+    console.log('[BuyBook] 🔧 Window loaded - initializing service...');
+    initBuyBookButtonService();
+  });
+  
+  // Additional retries
+  setTimeout(() => {
+    console.log('[BuyBook] 🔧 Delayed attempt 1 - initializing service...');
+    initBuyBookButtonService();
+  }, 1000);
+  
+  setTimeout(() => {
+    console.log('[BuyBook] 🔧 Delayed attempt 2 - initializing service...');
+    initBuyBookButtonService();
+  }, 3000);
+  
+  setTimeout(() => {
+    console.log('[BuyBook] 🔧 Delayed attempt 3 - initializing service...');
+    initBuyBookButtonService();
+  }, 5000);
   
 })();
