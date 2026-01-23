@@ -1130,4 +1130,138 @@
     addDownloadLogsButton();
   });
   
+  // ========================================
+  // ADD "BUY BOOK" BUTTON
+  // ========================================
+  function addBuyBookButton() {
+    try {
+      // Find button with text "Take Your Next Step" or similar
+      const buttons = Array.from(document.querySelectorAll('button, a[role="button"]'));
+      let targetButton = null;
+      
+      for (const btn of buttons) {
+        const text = (btn.textContent || '').trim().toLowerCase();
+        if (text.includes('take your next step') || 
+            text.includes('next step') ||
+            (text.includes('step') && text.includes('next'))) {
+          targetButton = btn;
+          break;
+        }
+      }
+      
+      if (!targetButton) {
+        return; // Button not found yet
+      }
+      
+      // Check if "Buy Book" button already exists
+      const existingBuyBookBtn = document.getElementById('buy-book-btn');
+      if (existingBuyBookBtn && document.body.contains(existingBuyBookBtn)) {
+        return; // Already exists
+      }
+      
+      // Remove old button if it exists but not in DOM
+      if (existingBuyBookBtn) {
+        existingBuyBookBtn.remove();
+      }
+      
+      // Create "Buy Book" button
+      const buyBookBtn = document.createElement('a');
+      buyBookBtn.id = 'buy-book-btn';
+      buyBookBtn.href = 'https://a.co/d/5m8frEq';
+      buyBookBtn.target = '_blank';
+      buyBookBtn.rel = 'noopener noreferrer';
+      buyBookBtn.textContent = 'Buy Book';
+      buyBookBtn.style.cssText = `
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        margin-left: 0.75rem;
+        background-color: hsl(var(--primary));
+        color: hsl(var(--primary-foreground));
+        border: none;
+        border-radius: var(--radius);
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: var(--shadow-button);
+      `;
+      
+      // Add hover effect
+      buyBookBtn.addEventListener('mouseenter', () => {
+        buyBookBtn.style.opacity = '0.9';
+        buyBookBtn.style.transform = 'scale(1.02)';
+      });
+      buyBookBtn.addEventListener('mouseleave', () => {
+        buyBookBtn.style.opacity = '1';
+        buyBookBtn.style.transform = 'scale(1)';
+      });
+      
+      // Try to insert next to target button
+      const parent = targetButton.parentElement;
+      if (parent) {
+        // Check if parent is flex or grid container
+        const parentDisplay = window.getComputedStyle(parent).display;
+        if (parentDisplay === 'flex' || parentDisplay === 'grid') {
+          parent.appendChild(buyBookBtn);
+        } else {
+          // Wrap both buttons in a flex container
+          const wrapper = document.createElement('div');
+          wrapper.style.cssText = 'display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;';
+          targetButton.parentNode.insertBefore(wrapper, targetButton);
+          wrapper.appendChild(targetButton);
+          wrapper.appendChild(buyBookBtn);
+        }
+        console.log('[BuyBook] ✅ Buy Book button added successfully');
+      }
+    } catch (error) {
+      console.error('[BuyBook] ❌ Error adding Buy Book button:', error);
+    }
+  }
+  
+  // Monitor for "Take Your Next Step" button
+  function monitorBuyBookButton() {
+    const existingBtn = document.getElementById('buy-book-btn');
+    if (!existingBtn || !document.body.contains(existingBtn)) {
+      addBuyBookButton();
+    }
+  }
+  
+  // Try to add button multiple times (React may render later)
+  const tryAddBuyBookButton = () => {
+    try {
+      addBuyBookButton();
+    } catch (error) {
+      console.error('[BuyBook] Error in tryAddBuyBookButton:', error);
+    }
+  };
+  
+  // Initial attempts
+  tryAddBuyBookButton();
+  setTimeout(tryAddBuyBookButton, 500);
+  setTimeout(tryAddBuyBookButton, 1000);
+  setTimeout(tryAddBuyBookButton, 2000);
+  setTimeout(tryAddBuyBookButton, 3000);
+  setTimeout(tryAddBuyBookButton, 5000);
+  
+  // Monitor continuously
+  const buyBookCheckInterval = setInterval(() => {
+    monitorBuyBookButton();
+  }, 2000);
+  
+  // Use MutationObserver to detect when button appears
+  const buyBookObserver = new MutationObserver(() => {
+    monitorBuyBookButton();
+  });
+  
+  buyBookObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+  
+  // Clean up on page unload
+  window.addEventListener('beforeunload', () => {
+    clearInterval(buyBookCheckInterval);
+    buyBookObserver.disconnect();
+  });
+  
 })();
