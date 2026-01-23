@@ -336,37 +336,62 @@
 
     // Continuous monitoring to ensure country selector stays
     const monitorPhoneInput = () => {
-      const phoneInput = findPhoneInput();
-      
-      if (phoneInput && !phoneInput.closest('.phone-input-wrapper')) {
-        setupPhoneInput(phoneInput);
+      try {
+        const phoneInput = findPhoneInput();
+        
+        if (phoneInput && !phoneInput.closest('.phone-input-wrapper')) {
+          console.log('[ContactForm] 📞 Phone input found without country selector, adding...');
+          setupPhoneInput(phoneInput);
+        }
+      } catch (e) {
+        console.error('[ContactForm] Error in monitorPhoneInput:', e);
       }
     };
     
     // Try immediately
     monitorPhoneInput();
     
+    // Try multiple times with delays (React may render later)
+    setTimeout(monitorPhoneInput, 500);
+    setTimeout(monitorPhoneInput, 1000);
+    setTimeout(monitorPhoneInput, 2000);
+    setTimeout(monitorPhoneInput, 3000);
+    setTimeout(monitorPhoneInput, 5000);
+    
     // Keep checking periodically (React may re-render)
     const checkInterval = setInterval(() => {
       monitorPhoneInput();
-    }, 1000);
+    }, 2000);
     
     // Also use MutationObserver for immediate detection
-    const observer = new MutationObserver(() => {
-      monitorPhoneInput();
-    });
+    let observer = null;
+    try {
+      observer = new MutationObserver(() => {
+        monitorPhoneInput();
+      });
+      
+      // Observe the entire document for changes
+      if (document.body) {
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+      }
+    } catch (e) {
+      console.error('[ContactForm] Error setting up MutationObserver:', e);
+    }
     
-    // Observe the entire document for changes
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-    
-    // Stop monitoring after 2 minutes (form should be loaded by then)
+    // Stop monitoring after 5 minutes (form should be loaded by then)
     setTimeout(() => {
-      clearInterval(checkInterval);
-      observer.disconnect();
-    }, 120000);
+      try {
+        clearInterval(checkInterval);
+        if (observer) {
+          observer.disconnect();
+        }
+      } catch (e) {
+        // Ignore
+      }
+    }, 300000);
     
     setupEmailForm();
   }
