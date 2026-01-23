@@ -22,21 +22,30 @@
   <link rel="icon" type="image/x-icon" href="https://storage.googleapis.com/gpt-engineer-file-uploads/mY9i7pnNdZgSBdx9qt26Yb9neWx2/uploads/1768309326004-NOVAWEP.webp">
   <script type="module" src="/assets/index-D4EisZyU.js"></script>
   <link rel="stylesheet" href="/assets/index-cSBRx8rT.css">
-<!-- Temporarily disabled to test page loading -->
-<!-- <script src="/assets/contact-form.js?v=email-service-module-fix3" defer></script> -->
+  <script src="/assets/contact-form.js?v=email-service-module-fix3" defer></script>
+<!-- Temporarily disabled -->
 <!-- <script defer src="https://awakenyourhero.novawep.com/~flock.js" data-proxy-url="https://awakenyourhero.novawep.com/~api/analytics"></script> -->
 </head>
 
   <body>
     <div id="root"></div>
     <script>
-      // Fallback: if page doesn't load in 5 seconds, show error
-      setTimeout(function() {
-        if (!document.querySelector('#root').hasChildNodes()) {
-          console.error('Page failed to load - React app did not mount');
-          document.body.innerHTML = '<div style="padding: 20px; text-align: center;"><h1>Loading...</h1><p>If this message persists, please refresh the page.</p></div>';
-        }
-      }, 5000);
+      // Diagnostic: log when scripts load
+      window.addEventListener('load', function() {
+        console.log('✅ Page loaded');
+        console.log('✅ Root element:', document.querySelector('#root'));
+        console.log('✅ Root has children:', document.querySelector('#root').hasChildNodes());
+      });
+      
+      // Diagnostic: log errors
+      window.addEventListener('error', function(e) {
+        console.error('❌ JavaScript error:', e.message, e.filename, e.lineno);
+      });
+      
+      // Diagnostic: log unhandled promise rejections
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('❌ Unhandled promise rejection:', e.reason);
+      });
     </script>
   </body>
 </html>
