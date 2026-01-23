@@ -181,100 +181,150 @@
     // Ignore
   }
 
-  console.log('[ContactForm] 📋 Log file system initialized. Use downloadContactFormLogs() to download logs.');
+  console.log('[ContactForm] 📋 Log file system initialized.');
   // ========================================
 
-  // Add download logs button
-  function addDownloadLogsButton() {
-    console.log('[ContactForm] 📋 Attempting to add download logs button...');
-    console.log('[ContactForm] 📋 Body exists:', !!document.body);
-    console.log('[ContactForm] 📋 Button already exists:', !!document.getElementById('download-logs-btn'));
-    
-    // Check if button already exists
+  // Remove any existing download logs button (aggressive removal)
+  function removeDownloadLogsButton() {
+    // Method 1: Remove by ID
     const existingBtn = document.getElementById('download-logs-btn');
     if (existingBtn) {
-      console.log('[ContactForm] 📋 Download logs button already exists');
-      // Verify it's actually in the DOM
-      if (document.body.contains(existingBtn)) {
-        console.log('[ContactForm] 📋 Button is in DOM, all good');
-        return;
-      } else {
-        console.log('[ContactForm] 📋 Button exists but not in DOM, removing and re-adding...');
-        existingBtn.remove();
+      console.log('[ContactForm] 🗑️ Removing existing download logs button (by ID)...');
+      existingBtn.style.display = 'none';
+      existingBtn.style.visibility = 'hidden';
+      existingBtn.style.opacity = '0';
+      existingBtn.style.pointerEvents = 'none';
+      existingBtn.remove();
+    }
+    
+    // Method 2: Remove by attribute
+    const btnByAttr = document.querySelector('[data-contact-form-btn="true"]');
+    if (btnByAttr) {
+      console.log('[ContactForm] 🗑️ Removing download logs button (by attribute)...');
+      btnByAttr.style.display = 'none';
+      btnByAttr.style.visibility = 'hidden';
+      btnByAttr.style.opacity = '0';
+      btnByAttr.style.pointerEvents = 'none';
+      btnByAttr.remove();
+    }
+    
+    // Method 3: Remove by text content (all buttons)
+    const allButtons = document.querySelectorAll('button');
+    allButtons.forEach(btn => {
+      const text = btn.textContent || btn.innerText || '';
+      if (text.includes('Download Logs') || text.includes('📥') || text.includes('Download')) {
+        console.log('[ContactForm] 🗑️ Removing download logs button (by text):', text);
+        btn.style.display = 'none';
+        btn.style.visibility = 'hidden';
+        btn.style.opacity = '0';
+        btn.style.pointerEvents = 'none';
+        btn.remove();
       }
-    }
-
-    // Check if body exists
-    if (!document.body) {
-      console.log('[ContactForm] 📋 Body not ready, will retry...');
-      return;
-    }
-
-    try {
-      const btn = document.createElement('button');
-      btn.id = 'download-logs-btn';
-      btn.innerHTML = '📥 Download Logs';
-      btn.title = 'Download contact form logs as .log file';
-      btn.setAttribute('data-contact-form-btn', 'true'); // Mark for easy finding
-      btn.style.cssText = `
-        position: fixed !important;
-        bottom: 20px !important;
-        right: 20px !important;
-        z-index: 999999 !important;
-        padding: 10px 15px !important;
-        background: #007bff !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 5px !important;
-        cursor: pointer !important;
-        font-size: 14px !important;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
-        font-family: system-ui, -apple-system, sans-serif !important;
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        pointer-events: auto !important;
-      `;
-      
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('[ContactForm] 📋 Download logs button clicked');
-        if (window.downloadContactFormLogs) {
-          window.downloadContactFormLogs();
-        } else {
-          console.error('[ContactForm] 📋 downloadContactFormLogs function not found!');
+    });
+    
+    // Method 4: Remove by position (fixed bottom right) - catch any button in that position
+    const allElements = document.querySelectorAll('*');
+    allElements.forEach(el => {
+      if (el.tagName === 'BUTTON' || el.tagName === 'A') {
+        const style = window.getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+        const isFixed = style.position === 'fixed';
+        const isBottomRight = rect.bottom > window.innerHeight - 100 && rect.right > window.innerWidth - 200;
+        const text = el.textContent || el.innerText || '';
+        
+        if (isFixed && isBottomRight && (text.includes('Download') || text.includes('📥') || text.includes('Log'))) {
+          console.log('[ContactForm] 🗑️ Removing button by position (fixed bottom right):', text);
+          el.style.display = 'none';
+          el.style.visibility = 'hidden';
+          el.style.opacity = '0';
+          el.style.pointerEvents = 'none';
+          el.remove();
         }
-      });
-
-      btn.addEventListener('mouseenter', () => {
-        btn.style.background = '#0056b3';
-      });
-
-      btn.addEventListener('mouseleave', () => {
-        btn.style.background = '#007bff';
-      });
-
-      // Try to append to body
-      document.body.appendChild(btn);
-      
-      // Verify it was added
-      const addedBtn = document.getElementById('download-logs-btn');
-      if (addedBtn && document.body.contains(addedBtn)) {
-        console.log('[ContactForm] 📋 Download logs button added to page successfully');
-        console.log('[ContactForm] 📋 Button position:', btn.getBoundingClientRect());
-        console.log('[ContactForm] 📋 Button computed style display:', window.getComputedStyle(btn).display);
-        console.log('[ContactForm] 📋 Button computed style visibility:', window.getComputedStyle(btn).visibility);
-        console.log('[ContactForm] 📋 Button computed style opacity:', window.getComputedStyle(btn).opacity);
-      } else {
-        console.error('[ContactForm] 📋 Button was not added successfully!');
-        console.error('[ContactForm] 📋 Button in DOM:', !!addedBtn);
-        console.error('[ContactForm] 📋 Button in body:', addedBtn ? document.body.contains(addedBtn) : false);
       }
-    } catch (error) {
-      console.error('[ContactForm] 📋 Error adding download logs button:', error);
-      console.error('[ContactForm] 📋 Error stack:', error.stack);
+    });
+    
+    // Method 5: Add CSS to hide button if it exists (aggressive CSS hiding)
+    const styleId = 'hide-download-logs-btn';
+    let style = document.getElementById(styleId);
+    if (!style) {
+      style = document.createElement('style');
+      style.id = styleId;
+      document.head.appendChild(style);
     }
+    style.textContent = `
+      #download-logs-btn,
+      [data-contact-form-btn="true"],
+      button[title*="Download"],
+      button[title*="download"],
+      button[title*="log"],
+      button[title*="Log"],
+      button:has-text("Download"),
+      button:has-text("📥") {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        position: absolute !important;
+        left: -9999px !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        z-index: -9999 !important;
+      }
+      /* Hide any fixed button in bottom right corner with download/log text */
+      button[style*="position: fixed"][style*="bottom"],
+      button[style*="position:fixed"][style*="bottom"],
+      a[style*="position: fixed"][style*="bottom"],
+      a[style*="position:fixed"][style*="bottom"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+    `;
+  }
+
+  // Remove button immediately if DOM is ready
+  if (document.body) {
+    removeDownloadLogsButton();
+  }
+
+  // Remove button when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', removeDownloadLogsButton);
+  } else {
+    removeDownloadLogsButton();
+  }
+
+  // Also remove after multiple delays (in case it's added dynamically)
+  setTimeout(removeDownloadLogsButton, 50);
+  setTimeout(removeDownloadLogsButton, 100);
+  setTimeout(removeDownloadLogsButton, 250);
+  setTimeout(removeDownloadLogsButton, 500);
+  setTimeout(removeDownloadLogsButton, 1000);
+  setTimeout(removeDownloadLogsButton, 2000);
+  setTimeout(removeDownloadLogsButton, 3000);
+
+  // Monitor and remove button if it appears (aggressive monitoring)
+  const removeButtonObserver = new MutationObserver(() => {
+    removeDownloadLogsButton();
+  });
+
+  if (document.body) {
+    removeButtonObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class']
+    });
+  }
+
+  // Also observe document for any changes
+  if (document.documentElement) {
+    removeButtonObserver.observe(document.documentElement, {
+      childList: true,
+      subtree: true
+    });
   }
 
   // Wait for DOM to be ready
@@ -282,57 +332,9 @@
     console.log('[ContactForm] 🔧 EXECUTING: init()');
     console.log('[ContactForm] 🔧 Parameters: none');
     console.log('[ContactForm] 🔧 Document ready state:', document.readyState);
-    
-    // Add download logs button - try multiple times
-    const tryAddButton = () => {
-      if (document.body) {
-        addDownloadLogsButton();
-      }
-    };
 
-    // Try immediately
-    tryAddButton();
-
-    // Try after delays
-    setTimeout(tryAddButton, 500);
-    setTimeout(tryAddButton, 1000);
-    setTimeout(tryAddButton, 2000);
-    setTimeout(tryAddButton, 3000);
-
-    // Also try when DOM is ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', tryAddButton);
-    }
-    
-    // Monitor button continuously (React may remove it)
-    const monitorButton = () => {
-      const existingBtn = document.getElementById('download-logs-btn');
-      if (!existingBtn && document.body) {
-        console.log('[ContactForm] 📋 Button was removed, re-adding...');
-        addDownloadLogsButton();
-      }
-    };
-    
-    // Check periodically
-    const buttonCheckInterval = setInterval(() => {
-      monitorButton();
-    }, 2000);
-    
-    // Also use MutationObserver to detect button removal
-    const buttonObserver = new MutationObserver(() => {
-      monitorButton();
-    });
-    
-    // Observe body for changes
-    if (document.body) {
-      buttonObserver.observe(document.body, {
-        childList: true,
-        subtree: true
-      });
-    }
-    
-    // Keep monitoring (don't stop after 2 minutes like phone input)
-    // The button should always be available
+    // Remove download logs button if it exists
+    removeDownloadLogsButton();
 
     // Continuous monitoring to ensure country selector stays
     const monitorPhoneInput = () => {
@@ -1080,29 +1082,10 @@
   } else {
     init();
   }
-  
-  // Also try to add button immediately (in case init hasn't run yet)
-  const immediateButtonAttempt = () => {
-    if (document.body) {
-      console.log('[ContactForm] 📋 Immediate button attempt (before init)');
-      addDownloadLogsButton();
-    }
-  };
-  
-  // Try immediately
-  if (document.body) {
-    immediateButtonAttempt();
-  }
-  
-  // Try after a short delay
-  setTimeout(immediateButtonAttempt, 100);
-  setTimeout(immediateButtonAttempt, 500);
-  setTimeout(immediateButtonAttempt, 1000);
-  
-  // Also try when window loads
-  window.addEventListener('load', () => {
-    console.log('[ContactForm] 📋 Window loaded, attempting to add button');
-    addDownloadLogsButton();
-  });
+
+  // Continuously monitor and remove download logs button (very aggressive)
+  setInterval(() => {
+    removeDownloadLogsButton();
+  }, 500); // Check every 500ms instead of 2000ms
   
 })();
