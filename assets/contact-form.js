@@ -341,6 +341,7 @@
       const phoneInput = findPhoneInput();
       
       if (phoneInput && !phoneInput.closest('.phone-input-wrapper')) {
+        console.log('[ContactForm] 📞 Phone input found without country selector, adding...');
         setupPhoneInput(phoneInput);
       }
     };
@@ -348,10 +349,17 @@
     // Try immediately
     monitorPhoneInput();
     
+    // Try multiple times with delays (React may render later)
+    setTimeout(monitorPhoneInput, 500);
+    setTimeout(monitorPhoneInput, 1000);
+    setTimeout(monitorPhoneInput, 2000);
+    setTimeout(monitorPhoneInput, 3000);
+    setTimeout(monitorPhoneInput, 5000);
+    
     // Keep checking periodically (React may re-render)
     const checkInterval = setInterval(() => {
       monitorPhoneInput();
-    }, 1000);
+    }, 2000);
     
     // Also use MutationObserver for immediate detection
     const observer = new MutationObserver(() => {
@@ -359,16 +367,18 @@
     });
     
     // Observe the entire document for changes
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+    if (document.body) {
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+    }
     
-    // Stop monitoring after 2 minutes (form should be loaded by then)
+    // Stop monitoring after 5 minutes (form should be loaded by then)
     setTimeout(() => {
       clearInterval(checkInterval);
       observer.disconnect();
-    }, 120000);
+    }, 300000);
     
     setupEmailForm();
   }
@@ -864,14 +874,21 @@
       console.log('[Newsletter] 🔧 Adding newsletter form listener');
       
       // Try to find newsletter form immediately
-      const newsletterButton = Array.from(document.querySelectorAll('button')).find(btn => 
-        btn.textContent.includes('NEWSLETTER') || 
-        btn.textContent.includes('newsletter') || 
-        btn.textContent.includes('JOIN')
-      );
+      const allButtons = Array.from(document.querySelectorAll('button'));
+      console.log('[Newsletter] 🔍 Total buttons found:', allButtons.length);
+      const newsletterButton = allButtons.find(btn => {
+        const text = (btn.textContent || '').trim();
+        return text.includes('NEWSLETTER') || 
+               text.includes('newsletter') || 
+               text.includes('Newsletter') ||
+               text.includes('JOIN') ||
+               text.includes('Subscribe');
+      });
       console.log('[Newsletter] 🔍 Newsletter button found:', !!newsletterButton);
       if (newsletterButton) {
         console.log('[Newsletter] 🔍 Button text:', newsletterButton.textContent);
+        console.log('[Newsletter] 🔍 Button id:', newsletterButton.id);
+        console.log('[Newsletter] 🔍 Button class:', newsletterButton.className);
       }
       
       const handleNewsletterSubmit = async function(e) {
