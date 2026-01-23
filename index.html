@@ -23,7 +23,9 @@
   <script type="module" crossorigin src="/assets/index-D4EisZyU.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-cSBRx8rT.css">
     <script src="/assets/contact-form.js?v=remove-download-logs-btn-v4" defer></script>
-<script defer src="https://awakenyourhero.novawep.com/~flock.js" data-proxy-url="https://awakenyourhero.novawep.com/~api/analytics"></script></head>
+<!-- Temporarily disabled to fix page loading -->
+<!-- <script defer src="https://awakenyourhero.novawep.com/~flock.js" data-proxy-url="https://awakenyourhero.novawep.com/~api/analytics"></script> -->
+</head>
 
   <body>
     <div id="root"></div>
@@ -32,36 +34,29 @@
       (function() {
         'use strict';
         
+        // Add CSS to hide button immediately
+        try {
+          const style = document.createElement('style');
+          style.textContent = '#download-logs-btn { display: none !important; visibility: hidden !important; }';
+          if (document.head) {
+            document.head.appendChild(style);
+          } else if (document.documentElement) {
+            document.documentElement.appendChild(style);
+          }
+        } catch (e) {
+          // Ignore errors
+        }
+        
         function removeDownloadLogsButton() {
           try {
-            // Remove by ID
+            // Only remove by ID - very specific
             const btn = document.getElementById('download-logs-btn');
             if (btn) {
               btn.remove();
             }
-            
-            // Remove by text content
-            const allButtons = document.querySelectorAll('button, a');
-            allButtons.forEach(el => {
-              const text = el.textContent || el.innerText || '';
-              if (text.includes('Download Logs') || text.includes('📥')) {
-                el.remove();
-              }
-            });
           } catch (e) {
             // Ignore errors
           }
-        }
-        
-        // Add CSS to hide button
-        try {
-          const style = document.createElement('style');
-          style.textContent = '#download-logs-btn, [data-contact-form-btn="true"] { display: none !important; }';
-          if (document.head) {
-            document.head.appendChild(style);
-          }
-        } catch (e) {
-          // Ignore errors
         }
         
         // Remove when DOM is ready
@@ -71,16 +66,27 @@
           removeDownloadLogsButton();
         }
         
-        // Remove periodically
-        setInterval(removeDownloadLogsButton, 1000);
-        
-        // Use MutationObserver
+        // Use MutationObserver with minimal impact
         try {
-          const observer = new MutationObserver(removeDownloadLogsButton);
+          const observer = new MutationObserver(function(mutations) {
+            // Only check if download-logs-btn exists
+            if (document.getElementById('download-logs-btn')) {
+              removeDownloadLogsButton();
+            }
+          });
           if (document.body) {
             observer.observe(document.body, {
               childList: true,
               subtree: true
+            });
+          } else {
+            document.addEventListener('DOMContentLoaded', function() {
+              if (document.body) {
+                observer.observe(document.body, {
+                  childList: true,
+                  subtree: true
+                });
+              }
             });
           }
         } catch (e) {
