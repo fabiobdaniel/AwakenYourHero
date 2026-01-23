@@ -1596,24 +1596,82 @@
         text-align: center;
       `;
       
-      // Create container for image and description
+      // Create container for text and image (side by side)
       const contentContainer = document.createElement('div');
       contentContainer.style.cssText = `
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2rem;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 3rem;
         max-width: 1200px;
         margin: 0 auto;
         padding: 0 1rem;
       `;
       
-      // Create image container
+      // Create text container (left side)
+      const textContainer = document.createElement('div');
+      textContainer.style.cssText = `
+        flex: 1;
+        min-width: 0;
+      `;
+      
+      // Create description
+      const description = document.createElement('div');
+      description.style.cssText = `
+        width: 100%;
+        line-height: 1.8;
+        font-size: 1.1rem;
+        color: inherit;
+        margin-bottom: 2rem;
+      `;
+      
+      const descriptionText = document.createElement('p');
+      descriptionText.innerHTML = `
+        <strong>From Discipline to Destiny</strong> is a clear call to action for anyone who knows they were meant for more but hasn't yet built the path to get there.<br><br>
+        
+        Through powerful, real-life stories, <a href="https://www.LesBrown.com" target="_blank" rel="noopener noreferrer">Les Brown</a> and a diverse group of leaders show that destiny isn't found by chance. It's built through daily discipline, focused thinking, and intentional action.<br><br>
+        
+        More than inspiration, this book offers a practical blueprint for taking ownership of your mindset, habits, and choices. It's for readers ready to stop waiting, stop holding back, and start living with purpose.<br><br>
+        
+        <strong>Discipline is the bridge. Destiny is the destination. The journey begins now.</strong>
+      `;
+      
+      description.appendChild(descriptionText);
+      
+      // Create Buy Book button
+      const buyBookBtn = document.createElement('a');
+      buyBookBtn.href = 'https://a.co/d/5m8frEq';
+      buyBookBtn.target = '_blank';
+      buyBookBtn.rel = 'noopener noreferrer';
+      buyBookBtn.textContent = 'Buy Book';
+      buyBookBtn.setAttribute('aria-label', 'Buy Book');
+      buyBookBtn.style.cssText = `
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.5rem;
+        background-color: hsl(var(--primary));
+        color: hsl(var(--primary-foreground));
+        font-weight: 600;
+        border-radius: var(--radius);
+        text-decoration: none;
+        cursor: pointer;
+        transition: none;
+        box-shadow: var(--shadow-button);
+        white-space: nowrap;
+        opacity: 1;
+        margin-top: 1rem;
+      `;
+      
+      textContainer.appendChild(description);
+      textContainer.appendChild(buyBookBtn);
+      
+      // Create image container (right side)
       const imageContainer = document.createElement('div');
       imageContainer.style.cssText = `
+        flex: 0 0 auto;
         width: 100%;
-        max-width: 600px;
-        margin: 0 auto;
+        max-width: 400px;
       `;
       
       const bookImage = document.createElement('img');
@@ -1636,32 +1694,29 @@
       
       imageContainer.appendChild(bookImage);
       
-      // Create description
-      const description = document.createElement('div');
-      description.style.cssText = `
-        width: 100%;
-        max-width: 800px;
-        line-height: 1.8;
-        font-size: 1.1rem;
-        color: inherit;
-      `;
+      // Mobile responsive: stack vertically on small screens
+      const mediaQuery = window.matchMedia('(max-width: 768px)');
+      const updateMobileLayout = () => {
+        if (mediaQuery.matches) {
+          // Mobile: stack vertically
+          contentContainer.style.flexDirection = 'column';
+          contentContainer.style.gap = '2rem';
+          imageContainer.style.maxWidth = '100%';
+          imageContainer.style.margin = '0 auto';
+        } else {
+          // Desktop: side by side
+          contentContainer.style.flexDirection = 'row';
+          contentContainer.style.gap = '3rem';
+          imageContainer.style.maxWidth = '400px';
+        }
+      };
       
-      const descriptionText = document.createElement('p');
-      descriptionText.innerHTML = `
-        <strong>From Discipline to Destiny</strong> is a clear call to action for anyone who knows they were meant for more but hasn't yet built the path to get there.<br><br>
-        
-        Through powerful, real-life stories, <a href="https://www.LesBrown.com" target="_blank" rel="noopener noreferrer">Les Brown</a> and a diverse group of leaders show that destiny isn't found by chance. It's built through daily discipline, focused thinking, and intentional action.<br><br>
-        
-        More than inspiration, this book offers a practical blueprint for taking ownership of your mindset, habits, and choices. It's for readers ready to stop waiting, stop holding back, and start living with purpose.<br><br>
-        
-        <strong>Discipline is the bridge. Destiny is the destination. The journey begins now.</strong>
-      `;
-      
-      description.appendChild(descriptionText);
+      updateMobileLayout();
+      mediaQuery.addEventListener('change', updateMobileLayout);
       
       // Assemble section
+      contentContainer.appendChild(textContainer);
       contentContainer.appendChild(imageContainer);
-      contentContainer.appendChild(description);
       
       bookSection.appendChild(title);
       bookSection.appendChild(contentContainer);
